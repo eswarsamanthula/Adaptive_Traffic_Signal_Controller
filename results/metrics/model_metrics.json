@@ -1,0 +1,53 @@
+{
+  "train_size": 3497,
+  "test_size": 1499,
+  "labels": [
+    "LOW",
+    "MEDIUM",
+    "HIGH"
+  ],
+  "accuracy": 0.6985,
+  "precision_macro": 0.6022,
+  "recall_macro": 0.4238,
+  "f1_macro": 0.4384,
+  "baseline_accuracy": 0.6778,
+  "baseline_label": "LOW",
+  "beats_baseline": true,
+  "confusion": [
+    [
+      959,
+      49,
+      8
+    ],
+    [
+      306,
+      75,
+      4
+    ],
+    [
+      78,
+      7,
+      13
+    ]
+  ],
+  "per_class": {
+    "LOW": {
+      "support": 1016,
+      "precision": 0.7141,
+      "recall": 0.9439,
+      "f1": 0.8131
+    },
+    "MEDIUM": {
+      "support": 385,
+      "precision": 0.5725,
+      "recall": 0.1948,
+      "f1": 0.2907
+    },
+    "HIGH": {
+      "support": 98,
+      "precision": 0.52,
+      "recall": 0.1327,
+      "f1": 0.2114
+    }
+  }
+}

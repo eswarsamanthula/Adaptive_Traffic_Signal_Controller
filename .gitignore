@@ -1,0 +1,37 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Environment secrets
+.env
+.env.*
+*.env
+
+# Local database runtime + backups (never committed)
+data/
+
+# Backup copies of tracked files (e.g. node_red/flows.json.bak-*)
+*.bak
+*.bak-*
+
+# Logs
+*.log
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# NOTE: models/congestion_model.joblib and results/ (figures + metrics) are
+# tracked intentionally for submission. Regenerate them with
+#   python -m src.analytics.run_evaluation --train

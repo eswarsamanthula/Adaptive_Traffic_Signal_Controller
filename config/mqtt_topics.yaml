@@ -1,0 +1,43 @@
+# MQTT topic catalog.
+#
+# Templates use two placeholders:
+#   {base}     -> the base prefix defined below
+#   {approach} -> the per-approach slug from the approaches map (North -> north)
+#
+# Final topics:
+#   team9/traffic/sensors/north            simulator/replay sensor readings
+#   team9/traffic/sensors/south
+#   team9/traffic/sensors/east
+#   team9/traffic/sensors/west
+#   team9/traffic/signal/state             controller live snapshot (all approaches)
+#   team9/traffic/signal/phase             one signal-state change event (GREEN/YELLOW/ALL_RED)
+#   team9/traffic/timing/decisions         green-time decisions for a cycle
+#   team9/traffic/test/input               dashboard Testing Lab -> controller
+#   team9/traffic/test/result              controller -> dashboard (old/new timing, reason)
+#   team9/traffic/commands/{approach}      controller -> actuator command (simulated)
+#   team9/traffic/acks/{approach}          actuator -> controller acknowledgement
+#   team9/traffic/status                   actuator liveness heartbeat (retained)
+#                                          {"role":"actuator","status":"online|offline",
+#                                           "timestamp","interval_seconds","uptime_seconds",
+#                                           "commands_received","commands_accepted",
+#                                           "commands_rejected"} - consumers show the
+#                                          actuator stale/disconnected when it ages out
+
+base: team9/traffic
+
+topics:
+  sensor: "{base}/sensors/{approach}"
+  status: "{base}/status"
+  command: "{base}/commands/{approach}"
+  ack: "{base}/acks/{approach}"
+  signal_state: "{base}/signal/state"
+  signal_phase: "{base}/signal/phase"
+  timing_decision: "{base}/timing/decisions"
+  test_input: "{base}/test/input"
+  test_result: "{base}/test/result"
+
+approaches:
+  North: north
+  South: south
+  East: east
+  West: west

@@ -1,0 +1,14 @@
+# Core dependencies (simulator + MQTT + controller/service)
+PyYAML
+paho-mqtt
+
+# Analytics / machine learning (congestion model + evaluation)
+numpy
+scikit-learn        # includes joblib for model persistence
+
+# Charts for the fixed-vs-adaptive comparison (optional; pipeline degrades
+# gracefully to CSV-only if matplotlib is unavailable)
+matplotlib
+
+# Testing: the suite runs with the standard library, no extra runner needed:
+#   python -m unittest discover -s tests

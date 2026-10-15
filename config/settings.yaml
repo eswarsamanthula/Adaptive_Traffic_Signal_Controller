@@ -1,0 +1,75 @@
+project:
+  name: Team 9 - Adaptive Traffic Signal Controller
+  team: Team 9
+  stage: simulator-and-mqtt
+
+paths:
+  dataset_csv: dataset/traffic_data.csv
+  dataset_workbook: dataset/adaptive_traffic_project_dataset.xlsx
+  models_dir: models
+  results_dir: results
+
+database:
+  # Relative paths resolve against the project root. Used by src/database.
+  path: data/traffic.db
+
+simulator:
+  approaches: [North, South, East, West]
+  # Dataset rows are 1-minute intervals; interval_seconds is the wall-clock gap
+  # between two consecutive timestamps at speed = 1.0.
+  interval_seconds: 60
+  speed: 1.0
+  loop: false
+  # invalid_row_policy: skip -> log and continue, fail -> raise on first bad row
+  invalid_row_policy: skip
+  # Optional scenario filter, e.g. "Rush hour". null replays every scenario.
+  scenario: null
+
+mqtt:
+  host: localhost
+  port: 1883
+  keepalive: 60
+  client_id: team9-traffic-sim
+  username: null
+  password: null
+  clean_session: true
+  qos: 1
+  retain: false
+  reconnect_delay_seconds: 5
+  reconnect_max_seconds: 60
+  connect_timeout_seconds: 10
+  ack_timeout_seconds: 5
+
+# Adaptive signal controller parameters. All times are seconds.
+# min/max/default green and the fixed yellow + all-red clearance match the
+# frozen reference dataset (data_dictionary.md): green 10-60 s, yellow 3 s,
+# all-red 2 s, startup default 25 s.
+controller:
+  phase_order: [North, South, East, West]
+  min_green_seconds: 10
+  max_green_seconds: 60
+  default_green_seconds: 25
+  yellow_seconds: 3
+  all_red_seconds: 2
+  # A reading older than this (relative to the decision time) is treated as
+  # stale, and the approach falls back to the default/fixed timing.
+  stale_after_seconds: 180
+  # Demand score = queue*Wq + arrival*Wa + wait*Ww. Higher score -> more green.
+  score_queue_weight: 1.0
+  score_arrival_weight: 1.0
+  score_wait_weight: 0.5
+  # |change| below this many seconds is reported as "hold" rather than extend/shorten.
+  hold_band_seconds: 3
+  # How often the running service advances the phase clock.
+  tick_seconds: 0.5
+
+# Simulated actuator handshake: after each phase change the controller publishes
+# a command and waits this long (seconds) for an acknowledgement before marking
+# it "unacknowledged". Keep well under the shortest phase (yellow, 3 s).
+actuator:
+  ack_timeout_seconds: 2
+  # Real liveness heartbeat: the actuator process publishes a retained status
+  # message on the `status` topic every interval_seconds while it is alive.
+  # Consumers derive health from the message age (stale after ~3 intervals,
+  # disconnected after ~6); a missing heartbeat is never shown as healthy.
+  heartbeat_interval_seconds: 5
