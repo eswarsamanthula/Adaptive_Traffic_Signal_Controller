@@ -1,0 +1,5 @@
+approach,green_durations_seconds,changes_seconds
+North,"[25, 60, 51, 43]","[35, -9, -8]"
+South,"[25, 12, 24]","[-13, 12]"
+East,"[25, 18, 11]","[-7, -7]"
+West,"[25, 11, 10]","[-14, -1]"

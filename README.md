@@ -122,13 +122,105 @@ deterministic queue model for both fixed-time (25 s) and adaptive policies.
 Outputs land in `results/metrics/` and `results/figures/`. Nothing is written
 into `dataset/`.
 
+## ML Model Comparison
+
+The offline comparison evaluates Logistic Regression, Random Forest, Gradient
+Boosting and a feedforward MLP against the next-interval congestion label
+(LOW/MEDIUM/HIGH). All candidates use the frozen `dataset/traffic_data.csv`,
+the existing eight causal features, and one chronological 70/30 split; metrics
+include accuracy, balanced accuracy, macro/weighted F1, per-class scores,
+confusion matrices and a training-label majority baseline.
+
+The root-level `model_comparison*` reports, charts and artifacts are preserved
+as the historical row-split experiment. The current
+`python -m src.analytics.compare_models` run writes corrected metrics and
+charts under `results/metrics/temporal_corrected/` and
+`results/figures/temporal_corrected/`, with fitted candidates under
+`models/comparison/temporal_corrected/`. These remain offline decision-support
+models and do not control live signal timings.
+
+### Leakage-safe validation and advanced evaluation
+
+The earlier comparison above is historical: it used the legacy row-based
+split. Corrected comparison results are stored separately under
+`results/metrics/temporal_corrected/` and models under
+`models/comparison/temporal_corrected/`. Its split groups identical feature
+timestamps and purges training rows whose next-reading target reaches the test
+boundary. Rerun with `python -m src.analytics.compare_models`.
+
+On the frozen dataset, the corrected run used 3,492 training and 1,500 test
+rows, grouped 1,249 unique feature timestamps, and excluded 4 boundary-crossing
+rows. The test boundary was `2026-10-12 17:34:00`; every training target ended
+before it. Majority baseline accuracy was 0.6780.
+
+| Model | Accuracy | Balanced accuracy | Macro P/R/F1 | Weighted F1 | HIGH recall |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Logistic Regression | 0.6987 | 0.4238 | 0.6023 / 0.4238 / 0.4384 | 0.6398 | 0.1327 |
+| Random Forest | 0.6713 | 0.4538 | 0.5362 / 0.4538 / 0.4747 | 0.6428 | 0.2143 |
+| Gradient Boosting | 0.7067 | 0.4163 | 0.6689 / 0.4163 / 0.4258 | 0.6481 | 0.0714 |
+| MLP Neural Network | 0.6773 | 0.4815 | 0.5460 / 0.4815 / 0.5014 | 0.6539 | 0.2857 |
+
+MLP has the highest macro-F1, with weak HIGH recall (28.57%) and accuracy just
+below the majority baseline. Scores reflect this synthetic, imbalanced dataset
+and do not establish generalization to real intersections. Per-class
+LOW/MEDIUM/HIGH precision, recall, F1 and support are in
+`model_comparison_per_class.csv`; model configurations, seeds, split metadata
+and confusion matrices are in the JSON output.
+
+Phase 2 performance measurements can be rerun with
+`python -m src.analytics.benchmark_models` (three training repetitions by
+default; inference counts are configurable). CPU, sampled process RSS, model
+loading, latency and throughput are host-specific observations. Phase 3 uses
+`python -m src.analytics.closed_loop_evaluation` to exercise the existing
+controller service and actuator node over an in-process loopback with a manual
+clock. It measures application-level software latency without real MQTT/network
+delay. Its queue comparison remains a simplified synthetic saturation-flow
+model; neither this nor the frozen synthetic data establishes physical traffic,
+hardware, or energy outcomes. Experimental models remain offline only. The
+completed loopback run observed 37 actual phase events, 37/37 accepted normal
+phase-command acknowledgements, and zero timeline or Stop/Reset safety
+violations. Stop and Reset each publish four unique zero-duration RED commands
+and are confirmed only after all four matching accepted RED acknowledgements.
+Missing, rejected, stale or mismatched ACKs leave the operation visibly pending
+or failed and block GREEN restart; Reset changes controller runtime state only
+after confirmation and never deletes SQLite history. The dashboard reports
+operation status, ACK/pending/failure counts and last acknowledged actuator
+states. Fault injection held ACKs after simulated RED application; both
+operations timed out as failed and were not reported as confirmed. These are
+simulated actuator results, not guarantees about physical signals.
+
+Phase 2 used 3 fit repetitions/model, 20 warmups, 1,000 timed single-row
+predictions and 100 held-out batch repetitions. CPU percentage is process
+CPU-time divided by fit wall-time (percent of one logical CPU, so it can exceed
+100%); peak RSS is sampled every 5 ms and may miss brief peaks. Fit wall time
+(mean ± SD), process CPU time and utilization (mean ± SD), peak RSS, single-row
+median/p95/p99/max latency, batch throughput, artifact load time and bytes were
+measured on Windows 11, Python 3.13.7, Intel64 Family 6 Model 186 (12 logical
+CPUs), NumPy 2.2.6 and scikit-learn 1.7.2, CPU only:
+
+| Model | Fit s | CPU s | CPU % | Peak RSS MB | Single-row ms (median/p95/p99/max) | Batch samples/s | Load ms | Artifact bytes |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Logistic Regression | 0.0253 ± 0.0003 | 0.0260 ± 0.0090 | 102.9 ± 35.4 | 153.9 | 0.094 / 0.191 / 0.269 / 0.999 | 1,385,660 | 24.10 | 29,939 |
+| Random Forest | 0.7969 ± 0.0459 | 0.7813 ± 0.0563 | 98.0 ± 1.6 | 249.5 | 4.912 / 6.806 / 8.155 / 53.147 | 26,288 | 142.42 | 53,972,454 |
+| Gradient Boosting | 0.7152 ± 0.0079 | 0.7031 ± 0.0156 | 98.3 ± 2.0 | 270.7 | 0.342 / 0.611 / 0.743 / 1.588 | 305,656 | 26.45 | 361,387 |
+| MLP Neural Network | 2.3105 ± 0.2076 | 2.2396 ± 0.2371 | 96.8 ± 1.9 | 273.5 | 0.110 / 0.128 / 0.209 / 2.069 | 903,250 | 22.75 | 129,478 |
+
+All artifacts passed save/load prediction-consistency checks. Phase 3 command to
+ACK median/p95/p99/max processing latency was 0.125/0.167/0.190/0.200 ms in
+the in-process loopback. The fixed/adaptive queue model produced average delay
+139.399/76.585 s, average queue 7.005/3.848, maximum queue 113/21 and Jain
+fairness 0.9572/0.9923; maximum red wait was 95/164 s. These values come from
+the simplified queue model, not measured road traffic.
+
 ## Tests
 
 ```cmd
 python -m unittest discover -s tests
 ```
 
-179 tests, pure standard library — no broker, browser or Node-RED required.
+The regression suite includes controller, service, simulator and actuator-node
+safe-stop scenarios. It uses fake MQTT and temporary SQLite databases; no live
+broker or physical hardware is required.
 
 ## Limitations and safety
 

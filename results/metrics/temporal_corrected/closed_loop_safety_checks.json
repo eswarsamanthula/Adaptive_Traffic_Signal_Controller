@@ -1,0 +1,511 @@
+{
+  "summary": {
+    "checks_performed": 37,
+    "timeline_violations": 0,
+    "stop_reset_actuator_violations": 0,
+    "violations": 0,
+    "timing_envelope_violations": 0,
+    "conflicting_green_violations": 0,
+    "expected_negative_tests": [
+      {
+        "case": "invalid_state",
+        "expected": "rejected",
+        "actual": "rejected",
+        "applied_state_unchanged": true,
+        "passed": true
+      },
+      {
+        "case": "out_of_range_green",
+        "expected": "rejected",
+        "actual": "rejected",
+        "applied_state_unchanged": true,
+        "passed": true
+      },
+      {
+        "case": "unknown_approach",
+        "expected": "rejected",
+        "actual": "rejected",
+        "applied_state_unchanged": true,
+        "passed": true
+      },
+      {
+        "case": "conflicting_green_snapshot",
+        "expected": "rejected",
+        "actual": "rejected",
+        "passed": true
+      }
+    ],
+    "all_negative_tests_rejected": true,
+    "stop_all_red": true,
+    "reset_cycle_zero": true,
+    "stop_actuator_green_count": 0,
+    "stop_actuator_all_red": true,
+    "reset_actuator_green_count": 0,
+    "successful_stop": {
+      "operation": "stop",
+      "operation_id": "c8fac513e96e495c98ddfe481b0ce22b",
+      "status": "stop_confirmed",
+      "red_acknowledgements": 4,
+      "expected_acknowledgements": 4,
+      "pending_commands": 0,
+      "rejected": [],
+      "timed_out": [],
+      "actual_actuator_states": {
+        "North": "RED",
+        "South": "RED",
+        "East": "RED",
+        "West": "RED"
+      }
+    },
+    "successful_reset": {
+      "operation": "reset",
+      "operation_id": "7e79c421675c45d1a699d75d6843bc70",
+      "status": "reset_confirmed",
+      "red_acknowledgements": 4,
+      "expected_acknowledgements": 4,
+      "pending_commands": 0,
+      "rejected": [],
+      "timed_out": [],
+      "actual_actuator_states": {
+        "North": "RED",
+        "South": "RED",
+        "East": "RED",
+        "West": "RED"
+      }
+    },
+    "fault_injection_stop_pending": {
+      "operation": "stop",
+      "operation_id": "88620c48f67249f2a5ebfca6cb226daa",
+      "status": "stopping",
+      "red_acknowledgements": 0,
+      "expected_acknowledgements": 4,
+      "pending_commands": 4,
+      "rejected": [],
+      "timed_out": [],
+      "actual_actuator_states": {
+        "North": "RED",
+        "South": "RED",
+        "East": "RED",
+        "West": "RED"
+      }
+    },
+    "fault_injection_stop_result": {
+      "operation": "stop",
+      "operation_id": "88620c48f67249f2a5ebfca6cb226daa",
+      "status": "failed",
+      "red_acknowledgements": 0,
+      "expected_acknowledgements": 4,
+      "pending_commands": 0,
+      "rejected": [],
+      "timed_out": [
+        {
+          "approach": "North",
+          "command_id": "9b7ecebde19a4458b960aba091d94882"
+        },
+        {
+          "approach": "South",
+          "command_id": "136156404b874a6abf35a7705bdde349"
+        },
+        {
+          "approach": "East",
+          "command_id": "52b7209a04114f50a305ea9dfc59f12a"
+        },
+        {
+          "approach": "West",
+          "command_id": "e3a67be59b81423d8355c6c83e5028fe"
+        }
+      ],
+      "actual_actuator_states": {
+        "North": "RED",
+        "South": "RED",
+        "East": "RED",
+        "West": "RED"
+      }
+    },
+    "fault_injection_reset_pending": {
+      "operation": "reset",
+      "operation_id": "9a8387c860f74340a9cd50a780b55056",
+      "status": "resetting",
+      "red_acknowledgements": 0,
+      "expected_acknowledgements": 4,
+      "pending_commands": 4,
+      "rejected": [],
+      "timed_out": [],
+      "actual_actuator_states": {
+        "North": "RED",
+        "South": "RED",
+        "East": "RED",
+        "West": "RED"
+      }
+    },
+    "fault_injection_reset_result": {
+      "operation": "reset",
+      "operation_id": "9a8387c860f74340a9cd50a780b55056",
+      "status": "failed",
+      "red_acknowledgements": 0,
+      "expected_acknowledgements": 4,
+      "pending_commands": 0,
+      "rejected": [],
+      "timed_out": [
+        {
+          "approach": "North",
+          "command_id": "f01bb7a45051409b8e341c291d5bd912"
+        },
+        {
+          "approach": "South",
+          "command_id": "719cb861fe154d769b677aabaf5a7dd8"
+        },
+        {
+          "approach": "East",
+          "command_id": "ea8cc246e91f425491f6dc7f3658925a"
+        },
+        {
+          "approach": "West",
+          "command_id": "c48f665e1aab472c932b1c1fe38d278c"
+        }
+      ],
+      "actual_actuator_states": {
+        "North": "RED",
+        "South": "RED",
+        "East": "RED",
+        "West": "RED"
+      }
+    },
+    "scope": "observed controller snapshots, actuator states and transition records; no physical signal hardware"
+  },
+  "checks": [
+    {
+      "sequence": 1,
+      "controller_green_count": 1,
+      "actuator_green_count": 1,
+      "timing_ok": true,
+      "no_controller_conflict": true,
+      "no_actuator_conflict": true,
+      "acknowledged_state_matches_actuator": true
+    },
+    {
+      "sequence": 2,
+      "controller_green_count": 0,
+      "actuator_green_count": 0,
+      "timing_ok": true,
+      "no_controller_conflict": true,
+      "no_actuator_conflict": true,
+      "acknowledged_state_matches_actuator": true
+    },
+    {
+      "sequence": 3,
+      "controller_green_count": 0,
+      "actuator_green_count": 0,
+      "timing_ok": true,
+      "no_controller_conflict": true,
+      "no_actuator_conflict": true,
+      "acknowledged_state_matches_actuator": true
+    },
+    {
+      "sequence": 4,
+      "controller_green_count": 1,
+      "actuator_green_count": 1,
+      "timing_ok": true,
+      "no_controller_conflict": true,
+      "no_actuator_conflict": true,
+      "acknowledged_state_matches_actuator": true
+    },
+    {
+      "sequence": 5,
+      "controller_green_count": 0,
+      "actuator_green_count": 0,
+      "timing_ok": true,
+      "no_controller_conflict": true,
+      "no_actuator_conflict": true,
+      "acknowledged_state_matches_actuator": true
+    },
+    {
+      "sequence": 6,
+      "controller_green_count": 0,
+      "actuator_green_count": 0,
+      "timing_ok": true,
+      "no_controller_conflict": true,
+      "no_actuator_conflict": true,
+      "acknowledged_state_matches_actuator": true
+    },
+    {
+      "sequence": 7,
+      "controller_green_count": 1,
+      "actuator_green_count": 1,
+      "timing_ok": true,
+      "no_controller_conflict": true,
+      "no_actuator_conflict": true,
+      "acknowledged_state_matches_actuator": true
+    },
+    {
+      "sequence": 8,
+      "controller_green_count": 0,
+      "actuator_green_count": 0,
+      "timing_ok": true,
+      "no_controller_conflict": true,
+      "no_actuator_conflict": true,
+      "acknowledged_state_matches_actuator": true
+    },
+    {
+      "sequence": 9,
+      "controller_green_count": 0,
+      "actuator_green_count": 0,
+      "timing_ok": true,
+      "no_controller_conflict": true,
+      "no_actuator_conflict": true,
+      "acknowledged_state_matches_actuator": true
+    },
+    {
+      "sequence": 10,
+      "controller_green_count": 1,
+      "actuator_green_count": 1,
+      "timing_ok": true,
+      "no_controller_conflict": true,
+      "no_actuator_conflict": true,
+      "acknowledged_state_matches_actuator": true
+    },
+    {
+      "sequence": 11,
+      "controller_green_count": 0,
+      "actuator_green_count": 0,
+      "timing_ok": true,
+      "no_controller_conflict": true,
+      "no_actuator_conflict": true,
+      "acknowledged_state_matches_actuator": true
+    },
+    {
+      "sequence": 12,
+      "controller_green_count": 0,
+      "actuator_green_count": 0,
+      "timing_ok": true,
+      "no_controller_conflict": true,
+      "no_actuator_conflict": true,
+      "acknowledged_state_matches_actuator": true
+    },
+    {
+      "sequence": 13,
+      "controller_green_count": 1,
+      "actuator_green_count": 1,
+      "timing_ok": true,
+      "no_controller_conflict": true,
+      "no_actuator_conflict": true,
+      "acknowledged_state_matches_actuator": true
+    },
+    {
+      "sequence": 14,
+      "controller_green_count": 0,
+      "actuator_green_count": 0,
+      "timing_ok": true,
+      "no_controller_conflict": true,
+      "no_actuator_conflict": true,
+      "acknowledged_state_matches_actuator": true
+    },
+    {
+      "sequence": 15,
+      "controller_green_count": 0,
+      "actuator_green_count": 0,
+      "timing_ok": true,
+      "no_controller_conflict": true,
+      "no_actuator_conflict": true,
+      "acknowledged_state_matches_actuator": true
+    },
+    {
+      "sequence": 16,
+      "controller_green_count": 1,
+      "actuator_green_count": 1,
+      "timing_ok": true,
+      "no_controller_conflict": true,
+      "no_actuator_conflict": true,
+      "acknowledged_state_matches_actuator": true
+    },
+    {
+      "sequence": 17,
+      "controller_green_count": 0,
+      "actuator_green_count": 0,
+      "timing_ok": true,
+      "no_controller_conflict": true,
+      "no_actuator_conflict": true,
+      "acknowledged_state_matches_actuator": true
+    },
+    {
+      "sequence": 18,
+      "controller_green_count": 0,
+      "actuator_green_count": 0,
+      "timing_ok": true,
+      "no_controller_conflict": true,
+      "no_actuator_conflict": true,
+      "acknowledged_state_matches_actuator": true
+    },
+    {
+      "sequence": 19,
+      "controller_green_count": 1,
+      "actuator_green_count": 1,
+      "timing_ok": true,
+      "no_controller_conflict": true,
+      "no_actuator_conflict": true,
+      "acknowledged_state_matches_actuator": true
+    },
+    {
+      "sequence": 20,
+      "controller_green_count": 0,
+      "actuator_green_count": 0,
+      "timing_ok": true,
+      "no_controller_conflict": true,
+      "no_actuator_conflict": true,
+      "acknowledged_state_matches_actuator": true
+    },
+    {
+      "sequence": 21,
+      "controller_green_count": 0,
+      "actuator_green_count": 0,
+      "timing_ok": true,
+      "no_controller_conflict": true,
+      "no_actuator_conflict": true,
+      "acknowledged_state_matches_actuator": true
+    },
+    {
+      "sequence": 22,
+      "controller_green_count": 1,
+      "actuator_green_count": 1,
+      "timing_ok": true,
+      "no_controller_conflict": true,
+      "no_actuator_conflict": true,
+      "acknowledged_state_matches_actuator": true
+    },
+    {
+      "sequence": 23,
+      "controller_green_count": 0,
+      "actuator_green_count": 0,
+      "timing_ok": true,
+      "no_controller_conflict": true,
+      "no_actuator_conflict": true,
+      "acknowledged_state_matches_actuator": true
+    },
+    {
+      "sequence": 24,
+      "controller_green_count": 0,
+      "actuator_green_count": 0,
+      "timing_ok": true,
+      "no_controller_conflict": true,
+      "no_actuator_conflict": true,
+      "acknowledged_state_matches_actuator": true
+    },
+    {
+      "sequence": 25,
+      "controller_green_count": 1,
+      "actuator_green_count": 1,
+      "timing_ok": true,
+      "no_controller_conflict": true,
+      "no_actuator_conflict": true,
+      "acknowledged_state_matches_actuator": true
+    },
+    {
+      "sequence": 26,
+      "controller_green_count": 0,
+      "actuator_green_count": 0,
+      "timing_ok": true,
+      "no_controller_conflict": true,
+      "no_actuator_conflict": true,
+      "acknowledged_state_matches_actuator": true
+    },
+    {
+      "sequence": 27,
+      "controller_green_count": 0,
+      "actuator_green_count": 0,
+      "timing_ok": true,
+      "no_controller_conflict": true,
+      "no_actuator_conflict": true,
+      "acknowledged_state_matches_actuator": true
+    },
+    {
+      "sequence": 28,
+      "controller_green_count": 1,
+      "actuator_green_count": 1,
+      "timing_ok": true,
+      "no_controller_conflict": true,
+      "no_actuator_conflict": true,
+      "acknowledged_state_matches_actuator": true
+    },
+    {
+      "sequence": 29,
+      "controller_green_count": 0,
+      "actuator_green_count": 0,
+      "timing_ok": true,
+      "no_controller_conflict": true,
+      "no_actuator_conflict": true,
+      "acknowledged_state_matches_actuator": true
+    },
+    {
+      "sequence": 30,
+      "controller_green_count": 0,
+      "actuator_green_count": 0,
+      "timing_ok": true,
+      "no_controller_conflict": true,
+      "no_actuator_conflict": true,
+      "acknowledged_state_matches_actuator": true
+    },
+    {
+      "sequence": 31,
+      "controller_green_count": 1,
+      "actuator_green_count": 1,
+      "timing_ok": true,
+      "no_controller_conflict": true,
+      "no_actuator_conflict": true,
+      "acknowledged_state_matches_actuator": true
+    },
+    {
+      "sequence": 32,
+      "controller_green_count": 0,
+      "actuator_green_count": 0,
+      "timing_ok": true,
+      "no_controller_conflict": true,
+      "no_actuator_conflict": true,
+      "acknowledged_state_matches_actuator": true
+    },
+    {
+      "sequence": 33,
+      "controller_green_count": 0,
+      "actuator_green_count": 0,
+      "timing_ok": true,
+      "no_controller_conflict": true,
+      "no_actuator_conflict": true,
+      "acknowledged_state_matches_actuator": true
+    },
+    {
+      "sequence": 34,
+      "controller_green_count": 1,
+      "actuator_green_count": 1,
+      "timing_ok": true,
+      "no_controller_conflict": true,
+      "no_actuator_conflict": true,
+      "acknowledged_state_matches_actuator": true
+    },
+    {
+      "sequence": 35,
+      "controller_green_count": 0,
+      "actuator_green_count": 0,
+      "timing_ok": true,
+      "no_controller_conflict": true,
+      "no_actuator_conflict": true,
+      "acknowledged_state_matches_actuator": true
+    },
+    {
+      "sequence": 36,
+      "controller_green_count": 0,
+      "actuator_green_count": 0,
+      "timing_ok": true,
+      "no_controller_conflict": true,
+      "no_actuator_conflict": true,
+      "acknowledged_state_matches_actuator": true
+    },
+    {
+      "sequence": 37,
+      "controller_green_count": 1,
+      "actuator_green_count": 1,
+      "timing_ok": true,
+      "no_controller_conflict": true,
+      "no_actuator_conflict": true,
+      "acknowledged_state_matches_actuator": true
+    }
+  ]
+}

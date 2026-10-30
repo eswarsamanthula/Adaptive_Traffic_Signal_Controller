@@ -8,7 +8,7 @@ target leakage — no future information is ever used as an input.
 """
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Dict, List, Sequence, Tuple
 
 from src.analytics.congestion import classify_congestion
@@ -36,6 +36,7 @@ class FeatureSet:
     labels: List[int]          # integer class ids (index into LABELS)
     timestamps: List[str]
     approaches: List[str]
+    target_timestamps: List[str] = field(default_factory=list)
 
     def __len__(self) -> int:
         return len(self.rows)
@@ -59,6 +60,7 @@ def build_features(readings: Sequence[SensorReading]) -> FeatureSet:
     labels: List[int] = []
     timestamps: List[str] = []
     approaches: List[str] = []
+    target_timestamps: List[str] = []
 
     for approach, series in by_approach.items():
         series = sorted(series, key=lambda r: r.timestamp)
@@ -84,34 +86,99 @@ def build_features(readings: Sequence[SensorReading]) -> FeatureSet:
             labels.append(_LABEL_INDEX[classify_congestion(nxt.queue_length, nxt.avg_wait_time)])
             timestamps.append(current.timestamp)
             approaches.append(approach)
+            target_timestamps.append(nxt.timestamp)
 
-    return FeatureSet(rows=rows, labels=labels, timestamps=timestamps, approaches=approaches)
+    return FeatureSet(rows=rows, labels=labels, timestamps=timestamps, approaches=approaches,
+                      target_timestamps=target_timestamps)
+
+
+@dataclass
+class ChronologicalSplitMetadata:
+    boundary_timestamp: str
+    unique_timestamp_count: int
+    train_feature_timestamps: List[str]
+    test_feature_timestamps: List[str]
+    earliest_train_target_timestamp: str
+    latest_train_target_timestamp: str
+    first_test_feature_timestamp: str
+    train_rows: int
+    test_rows: int
+    excluded_gap_rows: int
+    excluded_gap_reason: str
+    actual_train_fraction: float
+
+    def as_dict(self) -> dict:
+        return {
+            "boundary_timestamp": self.boundary_timestamp,
+            "unique_timestamp_count": self.unique_timestamp_count,
+            "train_feature_timestamps": sorted(set(self.train_feature_timestamps)),
+            "test_feature_timestamps": sorted(set(self.test_feature_timestamps)),
+            "earliest_train_target_timestamp": self.earliest_train_target_timestamp,
+            "latest_train_target_timestamp": self.latest_train_target_timestamp,
+            "first_test_feature_timestamp": self.first_test_feature_timestamp,
+            "train_rows": self.train_rows,
+            "test_rows": self.test_rows,
+            "excluded_gap_rows": self.excluded_gap_rows,
+            "excluded_gap_reason": self.excluded_gap_reason,
+            "actual_train_fraction": round(self.actual_train_fraction, 6),
+        }
+
+
+def leakage_safe_chronological_split(
+    features: FeatureSet, train_fraction: float = 0.7
+) -> Tuple[FeatureSet, FeatureSet, ChronologicalSplitMetadata]:
+    """Group equal feature times and purge rows whose next target crosses the boundary."""
+    if not 0.0 < train_fraction < 1.0:
+        raise ValueError("train_fraction must be in (0, 1)")
+    n = len(features)
+    if n < 2 or len(features.target_timestamps) != n:
+        raise ValueError("insufficient or invalid feature set: target timestamps are required")
+    unique_times = sorted(set(features.timestamps))
+    if len(unique_times) < 2:
+        raise ValueError("insufficient unique feature timestamps for a chronological split")
+    cut = int(len(unique_times) * train_fraction)
+    if cut <= 0 or cut >= len(unique_times):
+        raise ValueError("train fraction leaves an empty temporal partition")
+    boundary = unique_times[cut]
+    train_indices = [i for i, (feature_time, target_time) in enumerate(zip(features.timestamps, features.target_timestamps))
+                     if feature_time < boundary and target_time < boundary]
+    test_indices = [i for i, feature_time in enumerate(features.timestamps) if feature_time >= boundary]
+    excluded = [i for i, feature_time in enumerate(features.timestamps)
+                if feature_time < boundary and features.target_timestamps[i] >= boundary]
+    if not train_indices or not test_indices:
+        raise ValueError("leakage-safe chronological split produced an empty train or test set")
+
+    def subset(indices: List[int]) -> FeatureSet:
+        ordered = sorted(indices, key=lambda i: (features.timestamps[i], features.approaches[i]))
+        return FeatureSet(
+            rows=[features.rows[i] for i in ordered], labels=[features.labels[i] for i in ordered],
+            timestamps=[features.timestamps[i] for i in ordered], approaches=[features.approaches[i] for i in ordered],
+            target_timestamps=[features.target_timestamps[i] for i in ordered],
+        )
+
+    train, test = subset(train_indices), subset(test_indices)
+    meta = ChronologicalSplitMetadata(
+        boundary_timestamp=boundary, unique_timestamp_count=len(unique_times),
+        train_feature_timestamps=train.timestamps, test_feature_timestamps=test.timestamps,
+        earliest_train_target_timestamp=min(train.target_timestamps),
+        latest_train_target_timestamp=max(train.target_timestamps),
+        first_test_feature_timestamp=min(test.timestamps), train_rows=len(train), test_rows=len(test),
+        excluded_gap_rows=len(excluded), excluded_gap_reason="feature before boundary but next-reading target at or after boundary",
+        actual_train_fraction=len(train) / (len(train) + len(test)),
+    )
+    if not max(train.target_timestamps) < min(test.timestamps):
+        raise ValueError("temporal leakage check failed: training target timestamps overlap the test period")
+    if set(train.timestamps) & set(test.timestamps):
+        raise ValueError("temporal leakage check failed: feature timestamp appears in both partitions")
+    return train, test, meta
 
 
 def chronological_split(
     features: FeatureSet, train_fraction: float = 0.7
 ) -> Tuple[FeatureSet, FeatureSet]:
-    """Split by time order (earliest 70% train, latest 30% test).
-
-    The split is by index across the whole (already chronological) timeline so
-    the test set is strictly in the future relative to the training set.
-    """
-    if not 0.0 < train_fraction < 1.0:
-        raise ValueError("train_fraction must be in (0, 1)")
-    # Order rows by timestamp first so the split respects chronology globally.
-    order = sorted(range(len(features.rows)), key=lambda i: (features.timestamps[i], features.approaches[i]))
-    cut = int(len(order) * train_fraction)
-    train_idx, test_idx = order[:cut], order[cut:]
-
-    def _subset(indices: List[int]) -> FeatureSet:
-        return FeatureSet(
-            rows=[features.rows[i] for i in indices],
-            labels=[features.labels[i] for i in indices],
-            timestamps=[features.timestamps[i] for i in indices],
-            approaches=[features.approaches[i] for i in indices],
-        )
-
-    return _subset(train_idx), _subset(test_idx)
+    """Backward-compatible two-set API backed by the leakage-safe split."""
+    train, test, _ = leakage_safe_chronological_split(features, train_fraction)
+    return train, test
 
 
 def to_matrix(feature_set: FeatureSet) -> List[List[float]]:

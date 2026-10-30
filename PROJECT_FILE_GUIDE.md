@@ -244,12 +244,97 @@ Only three Markdown files remain: `README.md`, this guide, and
    and `ack_timeouts`, so the dashboards can show intended vs acknowledged state
    and distinguish *not applied* from *not responding*.
 
+Stop and Reset are asynchronous safe operations. The service inhibits phase
+ticks and new GREEN commands, stops the controller, and publishes a unique
+zero-duration RED command for each approach. It reports `stopping` or
+`resetting` while ACKs are pending. Only four accepted ACKs matching the command
+ID, topic approach and applied RED state confirm the operation. Rejected,
+missing, timed-out, stale or mismatched ACKs remain visible as failure or
+pending; the last acknowledged actuator state remains authoritative. Reset
+clears controller runtime state only after all four RED acknowledgements and
+does not clear SQLite history. Start/Resume remain inhibited after an
+unconfirmed safe operation; another Stop/Reset can retry it. The Testing Lab
+shows requested operation, status, RED ACK count, pending/rejected/timed-out
+counts and actual acknowledged states.
+
 **Module dependency direction** (no cycles):
 `common` → `simulator`/`mqtt`/`database` → `controller`/`analytics`/`actuator` →
 `service` → entry points (`actuator_node`, `controller_service`, `publisher`,
 `run_evaluation`).
 
 ---
+
+## Offline ML model comparison
+
+The root-level `model_comparison*` result files and comparison artifacts are
+preserved as the historical row-split experiment. The current
+`src/analytics/compare_models.py` builds features once with the established
+feature engineering code and uses the corrected grouped temporal split for all
+four models. The candidates are the existing StandardScaler + Logistic
+Regression baseline, an unweighted 300-tree Random Forest, 150-stage Gradient
+Boosting classifier, and a scaled feedforward MLP (`(64, 32)` hidden layers,
+`alpha=0.0001`). Random seeds are fixed at 2026. Preprocessing is fit only on
+training rows; the majority baseline is derived only from training labels.
+Results use explicit LOW/MEDIUM/HIGH class order, zero-division handling,
+four-decimal rounding, per-class metrics and confusion matrices. The MLP
+convergence status, warning text and iteration count are recorded.
+
+Run `python -m src.analytics.compare_models`. Corrected overall CSV/JSON,
+per-class CSV and confusion-matrix JSON are written to
+`results/metrics/temporal_corrected/`; charts are written to
+`results/figures/temporal_corrected/`. Four independently loadable joblib
+bundles are saved under `models/comparison/temporal_corrected/`; each includes
+configuration, feature/label order, split
+sizes, fitted estimator and held-out predictions. `tests/test_model_comparison.py`
+covers configurations, metrics, chronology, artifacts, figures and invalid
+inputs. These are offline decision-support experiments and never enter the live
+MQTT control path. Dataset class imbalance, especially for MEDIUM/HIGH, limits
+minority-class conclusions.
+
+### Advanced corrected evaluation
+
+The original un-nested Phase 1 comparison files and artifacts are historical
+and retain their legacy row split. Corrected comparison uses
+`leakage_safe_chronological_split` in
+`feature_engineering.py`: it groups feature rows by timestamp and removes any
+training row whose actual next-reading target is at or after the test boundary.
+Split metadata includes boundary, train/test timestamp sets, target-time range,
+row counts, excluded gap count and realized train fraction. Dataset cadence and
+approach coverage diagnostics are written with the corrected metrics.
+
+Run `python -m src.analytics.compare_models` for the corrected four-model
+experiment. Corrected metrics and charts are isolated in
+`results/metrics/temporal_corrected/` and
+`results/figures/temporal_corrected/`; its artifacts are in
+`models/comparison/temporal_corrected/`.
+
+Run `python -m src.analytics.benchmark_models` for repeated training wall/CPU
+time, sampled process RSS, warmed single-row latency percentiles, full-test
+batch throughput, artifact load time and size. `psutil` supplies process CPU
+and RSS observations. Imports, estimator creation, dataset preparation and
+feature splitting are outside the fit timer; candidates train sequentially.
+Measurements describe this host only.
+
+Run `python -m src.analytics.closed_loop_evaluation` for actual events emitted
+by `AdaptiveController`, processed through `ControllerService`, the existing
+`ActuatorNode`, command validation and acknowledgement correlation over a
+synchronous in-process loopback and `ManualClock`. It writes application-level
+software latency samples, actual phase events, stability/queue summaries and
+record-based safety checks into the same corrected metrics namespace. No live
+SQLite database is opened. Loopback timing excludes MQTT broker/network delay;
+the fixed-versus-adaptive queue comparison is a simplified saturation-flow
+approximation. Synthetic data and simulated actuation cannot establish physical
+traffic, hardware latency or energy use. Experimental classifiers remain
+offline and do not change deterministic live signal decisions. The completed
+evaluation observed 37 actual phase events and 37/37 successful normal
+phase-command acknowledgements. All 37 timeline safety checks passed.
+Successful Stop and Reset each received four accepted RED ACKs; the simulator
+reported all four approaches RED and the successful-path safety violation
+count was zero. Separate fault injections held ACKs after simulated RED
+application; Stop and Reset both timed out as failed/unconfirmed, with no false
+success. Command-to-ACK latency is measured inside the synchronous in-process
+loopback and excludes broker/network delay. Fixed-versus-adaptive queue results
+come from a simplified simulation and are not real-world traffic outcomes.
 
 ## E. Dataset, database, model and results
 

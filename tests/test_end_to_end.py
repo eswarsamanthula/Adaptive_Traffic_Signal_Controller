@@ -216,9 +216,11 @@ class EndToEndTests(unittest.TestCase):
         self.service.handle_message(self.topics.test_input_topic, json.dumps({"command": "stop"}))
         self.assertFalse(self.service.controller.running)
         self.service.handle_message(self.topics.test_input_topic, json.dumps({"command": "start"}))
-        self.assertTrue(self.service.controller.running)
+        self.assertFalse(self.service.controller.running)  # cannot restart before RED ACKs
+        self.assertEqual(self.service._safe_operation_view()["status"], "stopping")
         self.service.handle_message(self.topics.test_input_topic, json.dumps({"command": "reset"}))
-        self.assertEqual(self.service.controller.cycle_no, 0)
+        self.assertEqual(self.service._safe_operation_view()["status"], "stopping")
+        self.assertEqual(self.service.controller.cycle_no, 1)
 
     # --------------------------------------------------------------- tick path
     def test_tick_publishes_transitions_and_persists_events(self):

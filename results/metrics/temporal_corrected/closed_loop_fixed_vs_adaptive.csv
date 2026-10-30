@@ -1,0 +1,8 @@
+metric,fixed,adaptive,delta_adaptive_minus_fixed
+avg_delay_per_vehicle,139.399,76.585,-62.81400000000001
+avg_queue,7.005,3.848,-3.157
+max_queue,113,21,-92
+worst_approach_delay,172.304,86.212,-86.092
+max_red_wait_sec,95,164,69
+jain_fairness,0.9572,0.9923,0.03509999999999991
+served_fraction,0.9997,0.9997,0.0

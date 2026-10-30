@@ -1,0 +1,13 @@
+model,label,precision,recall,f1,support
+Logistic Regression,LOW,0.7143,0.944,0.8132,1017
+Logistic Regression,MEDIUM,0.5725,0.1948,0.2907,385
+Logistic Regression,HIGH,0.52,0.1327,0.2114,98
+Random Forest,LOW,0.7276,0.8614,0.7888,1017
+Random Forest,MEDIUM,0.4435,0.2857,0.3476,385
+Random Forest,HIGH,0.4375,0.2143,0.2877,98
+Gradient Boosting,LOW,0.7201,0.9489,0.8188,1017
+Gradient Boosting,MEDIUM,0.5867,0.2286,0.329,385
+Gradient Boosting,HIGH,0.7,0.0714,0.1296,98
+MLP Neural Network,LOW,0.7402,0.8574,0.7945,1017
+MLP Neural Network,MEDIUM,0.4462,0.3013,0.3597,385
+MLP Neural Network,HIGH,0.4516,0.2857,0.35,98

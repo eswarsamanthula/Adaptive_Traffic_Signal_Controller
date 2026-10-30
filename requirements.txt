@@ -10,5 +10,8 @@ scikit-learn        # includes joblib for model persistence
 # gracefully to CSV-only if matplotlib is unavailable)
 matplotlib
 
+# Evaluation-only process RSS measurement for Phase 2 benchmarking
+psutil
+
 # Testing: the suite runs with the standard library, no extra runner needed:
 #   python -m unittest discover -s tests

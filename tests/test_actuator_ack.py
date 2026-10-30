@@ -222,9 +222,9 @@ class ControllerAckTests(unittest.TestCase):
         self.service.check_ack_timeouts(now=time.time() + 9999)
         self.service._publish_snapshot()
         snapshot = self.fake.payloads_for(self.topics.signal_state_topic)[-1]
-        self.assertEqual(snapshot["ack_timeouts"], 1)
-        self.assertEqual(snapshot["last_timeout"]["command_id"], command["command_id"])
-        self.assertEqual(snapshot["last_timeout"]["approach"], command["approach"])
+        self.assertEqual(snapshot["ack_timeouts"], 2)  # startup GREEN plus the transition command
+        self.assertIn(snapshot["last_timeout"]["command_id"], [c["command_id"] for c in self._commands()])
+        self.assertIn(snapshot["last_timeout"]["approach"], self.config.phase_order)
         self.assertEqual(snapshot["pending_commands"], 0)
 
     def test_stale_ack_is_ignored(self):

@@ -1,0 +1,305 @@
+{
+  "latency": {
+    "command_to_acknowledgement_application_ms": {
+      "sample_count": 39,
+      "successful_samples": 37,
+      "failed_or_timed_out": 2,
+      "min_ms": 0.5029,
+      "median_ms": 0.5794,
+      "p95_ms": 0.8286399999999999,
+      "p99_ms": 0.865904,
+      "max_ms": 0.8789
+    },
+    "controller_tick_to_command_publication_ms": {
+      "sample_count": 36,
+      "successful_samples": 36,
+      "failed_or_timed_out": 0,
+      "min_ms": 0.0768,
+      "median_ms": 0.0968,
+      "p95_ms": 0.1749,
+      "p99_ms": 0.28517999999999993,
+      "max_ms": 0.3024
+    },
+    "stimulus_to_command_publication_ms": {
+      "sample_count": 3,
+      "successful_samples": 3,
+      "failed_or_timed_out": 0,
+      "min_ms": 0.7002,
+      "median_ms": 0.7794,
+      "p95_ms": 0.97416,
+      "p99_ms": 0.991472,
+      "max_ms": 0.9958
+    },
+    "scope": "application-level software latency without real broker/network delay"
+  },
+  "acknowledgements": {
+    "normal_accepted": 37,
+    "normal_rejected": 0,
+    "normal_controller_commands_issued": 37,
+    "normal_commands_missing_ack": 0,
+    "negative_command_tests_issued": 3,
+    "conflicting_snapshot_tests_issued": 1,
+    "negative_test_rejections": 4,
+    "acknowledgement_success_rate": 1.0,
+    "acknowledgement_success_rate_of_all_normal_commands": 1.0,
+    "negative_test_rejection_rate": 1.0,
+    "timeout_count": 2,
+    "delayed_ack_late_detected": true,
+    "actuator_applied_before_ack": true,
+    "controller_state_not_applied_before_ack": true,
+    "pending_commands_at_completion": 0,
+    "stale_or_unmatched_ack_count": 11,
+    "mismatched_command_id_count": 1,
+    "mismatched_ack_ignored_without_state_change": true
+  },
+  "phase_events": {
+    "actual_state_transitions": 37,
+    "green_entries": 13,
+    "yellow_transitions": 12,
+    "all_red_transitions": 12,
+    "approach_switches": 12,
+    "switches_per_simulated_hour": 121.00840336134453,
+    "completed_cycles": 3,
+    "mean_green_change_seconds": 11.777777777777779,
+    "max_green_change_seconds": 35,
+    "adjustments_exceeding_hold_band": 8,
+    "oscillation_indicator": "count and magnitude of sign reversals in consecutive per-approach green adjustments",
+    "oscillation_sign_reversals": 2
+  },
+  "control_stability": {
+    "max_red_wait_seconds": 164,
+    "max_green_duration_by_approach": {
+      "North": 60,
+      "South": 25,
+      "East": 25,
+      "West": 25
+    },
+    "mean_green_duration_by_approach": {
+      "North": 44.75,
+      "South": 20.333333333333332,
+      "East": 18,
+      "West": 15.333333333333334
+    },
+    "unnecessary_changes_constant_demand": "not measurable; the three-cycle scenario includes only one steady-demand cycle"
+  },
+  "queue_comparison": {
+    "model": "existing simplified deterministic saturation-flow approximation",
+    "same_frozen_exogenous_arrivals": true,
+    "fixed": {
+      "policy": "fixed",
+      "total_steps": 1250,
+      "total_arrivals": 15075,
+      "total_served": 15070,
+      "vehicle_seconds_delay": 2101440.0,
+      "avg_delay_per_vehicle": 139.399,
+      "avg_queue": 7.005,
+      "max_queue": 113,
+      "cycles": 625,
+      "phase_changes": 2500,
+      "served_fraction": 0.9997,
+      "duration_sec": 75000,
+      "throughput_per_min": 12.056,
+      "jain_fairness": 0.9572,
+      "worst_approach_delay": 172.304,
+      "max_red_wait_sec": 95
+    },
+    "adaptive": {
+      "policy": "adaptive",
+      "total_steps": 1250,
+      "total_arrivals": 15075,
+      "total_served": 15070,
+      "vehicle_seconds_delay": 1154520.0,
+      "avg_delay_per_vehicle": 76.585,
+      "avg_queue": 3.848,
+      "max_queue": 21,
+      "cycles": 642,
+      "phase_changes": 2568,
+      "served_fraction": 0.9997,
+      "duration_sec": 75000,
+      "throughput_per_min": 12.056,
+      "jain_fairness": 0.9923,
+      "worst_approach_delay": 86.212,
+      "max_red_wait_sec": 164
+    }
+  },
+  "safety": {
+    "checks_performed": 37,
+    "timeline_violations": 0,
+    "stop_reset_actuator_violations": 0,
+    "violations": 0,
+    "timing_envelope_violations": 0,
+    "conflicting_green_violations": 0,
+    "expected_negative_tests": [
+      {
+        "case": "invalid_state",
+        "expected": "rejected",
+        "actual": "rejected",
+        "applied_state_unchanged": true,
+        "passed": true
+      },
+      {
+        "case": "out_of_range_green",
+        "expected": "rejected",
+        "actual": "rejected",
+        "applied_state_unchanged": true,
+        "passed": true
+      },
+      {
+        "case": "unknown_approach",
+        "expected": "rejected",
+        "actual": "rejected",
+        "applied_state_unchanged": true,
+        "passed": true
+      },
+      {
+        "case": "conflicting_green_snapshot",
+        "expected": "rejected",
+        "actual": "rejected",
+        "passed": true
+      }
+    ],
+    "all_negative_tests_rejected": true,
+    "stop_all_red": true,
+    "reset_cycle_zero": true,
+    "stop_actuator_green_count": 0,
+    "stop_actuator_all_red": true,
+    "reset_actuator_green_count": 0,
+    "successful_stop": {
+      "operation": "stop",
+      "operation_id": "c8fac513e96e495c98ddfe481b0ce22b",
+      "status": "stop_confirmed",
+      "red_acknowledgements": 4,
+      "expected_acknowledgements": 4,
+      "pending_commands": 0,
+      "rejected": [],
+      "timed_out": [],
+      "actual_actuator_states": {
+        "North": "RED",
+        "South": "RED",
+        "East": "RED",
+        "West": "RED"
+      }
+    },
+    "successful_reset": {
+      "operation": "reset",
+      "operation_id": "7e79c421675c45d1a699d75d6843bc70",
+      "status": "reset_confirmed",
+      "red_acknowledgements": 4,
+      "expected_acknowledgements": 4,
+      "pending_commands": 0,
+      "rejected": [],
+      "timed_out": [],
+      "actual_actuator_states": {
+        "North": "RED",
+        "South": "RED",
+        "East": "RED",
+        "West": "RED"
+      }
+    },
+    "fault_injection_stop_pending": {
+      "operation": "stop",
+      "operation_id": "88620c48f67249f2a5ebfca6cb226daa",
+      "status": "stopping",
+      "red_acknowledgements": 0,
+      "expected_acknowledgements": 4,
+      "pending_commands": 4,
+      "rejected": [],
+      "timed_out": [],
+      "actual_actuator_states": {
+        "North": "RED",
+        "South": "RED",
+        "East": "RED",
+        "West": "RED"
+      }
+    },
+    "fault_injection_stop_result": {
+      "operation": "stop",
+      "operation_id": "88620c48f67249f2a5ebfca6cb226daa",
+      "status": "failed",
+      "red_acknowledgements": 0,
+      "expected_acknowledgements": 4,
+      "pending_commands": 0,
+      "rejected": [],
+      "timed_out": [
+        {
+          "approach": "North",
+          "command_id": "9b7ecebde19a4458b960aba091d94882"
+        },
+        {
+          "approach": "South",
+          "command_id": "136156404b874a6abf35a7705bdde349"
+        },
+        {
+          "approach": "East",
+          "command_id": "52b7209a04114f50a305ea9dfc59f12a"
+        },
+        {
+          "approach": "West",
+          "command_id": "e3a67be59b81423d8355c6c83e5028fe"
+        }
+      ],
+      "actual_actuator_states": {
+        "North": "RED",
+        "South": "RED",
+        "East": "RED",
+        "West": "RED"
+      }
+    },
+    "fault_injection_reset_pending": {
+      "operation": "reset",
+      "operation_id": "9a8387c860f74340a9cd50a780b55056",
+      "status": "resetting",
+      "red_acknowledgements": 0,
+      "expected_acknowledgements": 4,
+      "pending_commands": 4,
+      "rejected": [],
+      "timed_out": [],
+      "actual_actuator_states": {
+        "North": "RED",
+        "South": "RED",
+        "East": "RED",
+        "West": "RED"
+      }
+    },
+    "fault_injection_reset_result": {
+      "operation": "reset",
+      "operation_id": "9a8387c860f74340a9cd50a780b55056",
+      "status": "failed",
+      "red_acknowledgements": 0,
+      "expected_acknowledgements": 4,
+      "pending_commands": 0,
+      "rejected": [],
+      "timed_out": [
+        {
+          "approach": "North",
+          "command_id": "f01bb7a45051409b8e341c291d5bd912"
+        },
+        {
+          "approach": "South",
+          "command_id": "719cb861fe154d769b677aabaf5a7dd8"
+        },
+        {
+          "approach": "East",
+          "command_id": "ea8cc246e91f425491f6dc7f3658925a"
+        },
+        {
+          "approach": "West",
+          "command_id": "c48f665e1aab472c932b1c1fe38d278c"
+        }
+      ],
+      "actual_actuator_states": {
+        "North": "RED",
+        "South": "RED",
+        "East": "RED",
+        "West": "RED"
+      }
+    },
+    "scope": "observed controller snapshots, actuator states and transition records; no physical signal hardware"
+  },
+  "environment": {
+    "transport": "synchronous in-process loopback",
+    "database": "none opened or written; service persistence disabled",
+    "real_mqtt_network": false,
+    "physical_hardware": false
+  }
+}

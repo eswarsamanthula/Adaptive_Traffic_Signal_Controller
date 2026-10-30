@@ -136,7 +136,12 @@ class ActuatorNode:
             return
 
         self._commands_received += 1
-        result = self.actuator.apply(command)
+        if command.get("approach") != approach:
+            result = {"applied": False, "errors": [
+                f"command approach {command.get('approach')!r} does not match topic approach {approach!r}"
+            ]}
+        else:
+            result = self.actuator.apply(command)
         applied = bool(result.get("applied"))
         if applied:
             self._commands_accepted += 1
@@ -144,7 +149,7 @@ class ActuatorNode:
             self._commands_rejected += 1
         ack = {
             "command_id": command.get("command_id"),
-            "approach": command.get("approach", approach),
+            "approach": approach,
             "status": "accepted" if applied else "rejected",
             "applied_state": result["command"]["state"] if applied else None,
             "applied_at": now_timestamp(),

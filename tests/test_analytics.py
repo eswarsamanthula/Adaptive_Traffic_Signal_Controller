@@ -21,6 +21,7 @@ from src.analytics.feature_engineering import (
     FEATURE_NAMES,
     build_features,
     chronological_split,
+    leakage_safe_chronological_split,
     to_matrix,
 )
 from src.analytics.simulation import (
@@ -109,13 +110,32 @@ class FeatureTests(unittest.TestCase):
         self.assertGreater(len(train), 0)
         self.assertGreater(len(test), 0)
         self.assertLessEqual(max(train.timestamps), min(test.timestamps))
-        self.assertEqual(len(train) + len(test), len(features))
+        self.assertEqual(len(train) + len(test), len(features) - 4)
 
     def test_matrix_shape(self):
         features = build_features(synthetic_timeline())
         matrix = to_matrix(features)
         self.assertEqual(len(matrix), len(features))
         self.assertEqual(len(matrix[0]), len(FEATURE_NAMES))
+
+    def test_feature_and_target_timestamps_are_actual_adjacent_readings(self):
+        rows = synthetic_timeline(minutes=8)
+        features = build_features(rows)
+        self.assertEqual(len(features.target_timestamps), len(features))
+        self.assertEqual(features.target_timestamps[0], "2026-10-12 07:01:00")
+
+    def test_safe_split_groups_timestamps_and_purges_boundary_targets(self):
+        features = build_features(synthetic_timeline(minutes=30))
+        train, test, meta = leakage_safe_chronological_split(features)
+        self.assertLess(max(train.target_timestamps), min(test.timestamps))
+        self.assertFalse(set(train.timestamps) & set(test.timestamps))
+        self.assertEqual(meta.excluded_gap_rows, 4)
+        timestamp_partitions = {}
+        for part, subset in (("train", train), ("test", test)):
+            for timestamp in subset.timestamps:
+                timestamp_partitions.setdefault(timestamp, set()).add(part)
+        self.assertTrue(all(len(parts) == 1 for parts in timestamp_partitions.values()))
+        self.assertEqual(meta.boundary_timestamp, min(test.timestamps))
 
 
 class ModelTests(unittest.TestCase):

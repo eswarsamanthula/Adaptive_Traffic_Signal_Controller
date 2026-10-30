@@ -153,6 +153,11 @@ class ControllerService:
         # without an actuator ack, so it can lag the intended controller state.
         self._acked_states: Dict[str, str] = {a: "RED" for a in self.config.phase_order}
         self._pending_acks: Dict[str, dict] = {}
+        # MQTT callbacks and the phase ticker share this state. RLock permits
+        # synchronous fake-broker ACKs while a command is being published.
+        self._state_lock = threading.RLock()
+        self._safe_operation: Optional[dict] = None
+        self._green_inhibited = False
         # Ack health for the dashboard: how many commands have timed out and the
         # most recent one, so a "not responding" actuator is distinguishable
         # from one that is simply idle.
@@ -171,7 +176,11 @@ class ControllerService:
         self.client.subscribe(self.topics.test_input_topic, self.handle_message)
         for topic in self._ack_topics:
             self.client.subscribe(topic, self.handle_message)
-        self.controller.start()
+        with self._state_lock:
+            events = self.controller.start()
+            for event in events:
+                event.timestamp = now_timestamp()
+                self._record_event(event)
         self._announce_cycle()
         self._publish_snapshot()
         self._start_tick_thread()
@@ -180,8 +189,9 @@ class ControllerService:
         self._stop.set()
         if self._thread is not None and self._thread.is_alive():
             self._thread.join(timeout=2)
-        self.controller.stop()
-        self._publish_snapshot()
+        with self._state_lock:
+            self.controller.stop()
+            self._publish_snapshot()
 
     def _start_tick_thread(self) -> None:
         if self._thread is not None and self._thread.is_alive():
@@ -200,14 +210,15 @@ class ControllerService:
 
     # ------------------------------------------------------------- message path
     def handle_message(self, topic: str, payload: str) -> None:
-        if topic == self.topics.test_input_topic:
-            self._handle_test_input(payload)
-        elif topic in self._sensor_topics:
-            self._handle_sensor(self._sensor_topics[topic], payload)
-        elif topic in self._ack_topics:
-            self._handle_ack(self._ack_topics[topic], payload)
-        else:
-            self.log.warning("message on unhandled topic %s", topic)
+        with self._state_lock:
+            if topic == self.topics.test_input_topic:
+                self._handle_test_input(payload)
+            elif topic in self._sensor_topics:
+                self._handle_sensor(self._sensor_topics[topic], payload)
+            elif topic in self._ack_topics:
+                self._handle_ack(self._ack_topics[topic], payload)
+            else:
+                self.log.warning("message on unhandled topic %s", topic)
 
     def _handle_sensor(self, approach: str, payload: str) -> None:
         try:
@@ -241,17 +252,105 @@ class ControllerService:
 
     def _handle_control(self, command: str) -> None:
         if command == "start":
-            self.controller.start()
+            if self._green_inhibited or (self._safe_operation and self._safe_operation["status"] in ("stopping", "resetting", "failed")):
+                self._publish_control_result("start", False, "safe stop is not confirmed")
+                return
+            events = self.controller.start()
+            for event in events:
+                event.timestamp = now_timestamp()
+                self._record_event(event)
             self._announce_cycle()
-        elif command == "reset":
-            self.controller.reset()
-        elif command in ("stop", "pause", "resume"):
+        elif command in ("stop", "reset"):
+            self._request_safe_operation(command)
+            return
+        elif command in ("pause", "resume"):
+            if command == "resume" and self._green_inhibited:
+                self._publish_control_result(command, False, "safe stop is not confirmed")
+                return
             getattr(self.controller, command)()
         else:
             self._log_event("warning", "service", "invalid-command", command)
             return
         self._log_event("info", "service", "control", command)
         self._publish_snapshot()
+
+    def _request_safe_operation(self, operation: str) -> None:
+        current = self._safe_operation
+        if current and current.get("status") in ("stopping", "resetting"):
+            self._publish_control_result(operation, False, "another safe operation is pending")
+            return
+        self._green_inhibited = True
+        if operation == "reset":
+            self.controller.stop()
+        else:
+            self.controller.stop()
+        op = {
+            "operation": operation, "operation_id": uuid.uuid4().hex,
+            "status": "resetting" if operation == "reset" else "stopping",
+            "expected": set(self.config.phase_order), "received": set(),
+            "pending": set(), "rejected": [], "timed_out": [],
+            "started_at": now_timestamp(),
+        }
+        self._safe_operation = op
+        for approach in self.config.phase_order:
+            command_id = uuid.uuid4().hex
+            payload = {
+                "command_id": command_id, "cycle_no": self.controller.cycle_no,
+                "approach": approach, "state": SignalState.RED.value,
+                "duration_sec": 0, "issued_at": now_timestamp(),
+                "source": "safe_" + operation,
+            }
+            op["pending"].add(command_id)
+            self._pending_acks[command_id] = {
+                "approach": approach, "state": "RED", "issued_epoch": time.time(),
+                "safe_operation_id": op["operation_id"],
+            }
+            if self.repo is not None:
+                self.repo.insert_actuator_command(
+                    approach=approach, command="RED", command_id=command_id,
+                    green_time_sec=None, cycle_no=self.controller.cycle_no,
+                    status="pending", detail=json.dumps(payload, separators=(",", ":")),
+                )
+            self._publish(self.topics.command_topic(approach), payload)
+        if op["status"] in ("stopping", "resetting"):
+            self._publish_control_result(operation, None, "waiting for four RED acknowledgements")
+        self._publish_snapshot()
+
+    def _publish_control_result(self, operation: str, ok, message: str) -> None:
+        self._publish(self.topics.test_result_topic, {
+            "ok": ok, "operation": operation, "message": message,
+            "safe_operation": self._safe_operation_view(),
+        })
+
+    def _safe_operation_view(self) -> Optional[dict]:
+        op = self._safe_operation
+        if not op:
+            return None
+        return {
+            "operation": op["operation"], "operation_id": op["operation_id"],
+            "status": op["status"], "red_acknowledgements": len(op["received"]),
+            "expected_acknowledgements": len(op["expected"]),
+            "pending_commands": len(op["pending"]),
+            "rejected": list(op["rejected"]), "timed_out": list(op["timed_out"]),
+            "actual_actuator_states": dict(self._acked_states),
+        }
+
+    def _finish_safe_operation_if_ready(self) -> None:
+        op = self._safe_operation
+        if not op or op["status"] not in ("stopping", "resetting"):
+            return
+        if op["rejected"] or op["timed_out"]:
+            op["status"] = "failed"
+        elif not op["pending"] and op["received"] == op["expected"]:
+            if all(self._acked_states[a] == "RED" for a in self.config.phase_order):
+                if op["operation"] == "reset":
+                    self.controller.reset()
+                op["status"] = "reset_confirmed" if op["operation"] == "reset" else "stop_confirmed"
+                self._green_inhibited = False
+            else:
+                op["status"] = "failed"
+        if op["status"] in ("failed", "stop_confirmed", "reset_confirmed"):
+            self._publish_control_result(op["operation"], op["status"].endswith("confirmed"), op["status"])
 
     # --------------------------------------------------------- actuator handshake
     def _dispatch_command(self, event) -> None:
@@ -293,28 +392,52 @@ class ControllerService:
             return
 
         command_id = data.get("command_id")
-        pending = self._pending_acks.pop(command_id, None)
+        if not isinstance(command_id, str):
+            self._log_event("warning", "service", "stale-ack", "ack command_id must be a string")
+            return
+        pending = self._pending_acks.get(command_id)
         if pending is None:
             self._log_event("warning", "service", "stale-ack", f"no pending command {command_id!r}")
             return
 
+        if data.get("approach") != pending["approach"] or approach != pending["approach"]:
+            self._log_event("warning", "service", "mismatched-ack", f"{command_id}: approach mismatch")
+            return
+        self._pending_acks.pop(command_id, None)
+        op_id = pending.get("safe_operation_id")
+        op = self._safe_operation if op_id and self._safe_operation and self._safe_operation["operation_id"] == op_id else None
+        if op:
+            op["pending"].discard(command_id)
+
         status = str(data.get("status", "")).lower()
         ack_at = data.get("applied_at") or now_timestamp()
-        if status == "accepted":
-            state = data.get("applied_state") or pending["state"]
+        if status == "accepted" and data.get("applied_state") == pending["state"]:
+            state = data["applied_state"]
             self._acked_states[approach] = state
             self._update_ack(command_id, "accepted", None, ack_at, state)
+            if op:
+                op["received"].add(approach)
         else:
-            reason = data.get("reason") or "rejected"
+            reason = data.get("reason") or ("acknowledged state mismatch" if status == "accepted" else "rejected")
             self._update_ack(command_id, "rejected", reason, ack_at, None)
+            if op:
+                op["rejected"].append({"approach": approach, "command_id": command_id, "reason": reason})
             self._log_event(
                 "warning", "service", "actuator-rejected",
                 f"{approach} {pending['state']}: {reason}",
             )
+        prior_safe_status = op["status"] if op else None
+        self._finish_safe_operation_if_ready()
+        if op and op["status"] == "failed" and prior_safe_status == "failed":
+            self._publish_control_result(op["operation"], False, "failed; actuator acknowledgement state updated")
         self._publish_snapshot()
 
     def check_ack_timeouts(self, *, now: Optional[float] = None, timeout: Optional[float] = None) -> list:
         """Mark commands with no ack within the timeout as unacknowledged."""
+        with self._state_lock:
+            return self._check_ack_timeouts_locked(now=now, timeout=timeout)
+
+    def _check_ack_timeouts_locked(self, *, now: Optional[float] = None, timeout: Optional[float] = None) -> list:
         now = time.time() if now is None else now
         timeout = self.ack_timeout_seconds if timeout is None else timeout
         timed_out = []
@@ -322,6 +445,11 @@ class ControllerService:
             if now - pending["issued_epoch"] <= timeout:
                 continue
             del self._pending_acks[command_id]
+            op_id = pending.get("safe_operation_id")
+            op = self._safe_operation if op_id and self._safe_operation and self._safe_operation["operation_id"] == op_id else None
+            if op:
+                op["pending"].discard(command_id)
+                op["timed_out"].append({"approach": pending["approach"], "command_id": command_id})
             self._update_ack(command_id, "unacknowledged", None, now_timestamp(), None)
             self._ack_timeouts += 1
             self._last_timeout = {
@@ -336,6 +464,7 @@ class ControllerService:
                 f"{pending['approach']} {pending['state']} unacknowledged after {timeout}s",
             )
             timed_out.append(command_id)
+        self._finish_safe_operation_if_ready()
         return timed_out
 
     def _update_ack(self, command_id, status, reason, ack_at, applied_state) -> None:
@@ -406,16 +535,17 @@ class ControllerService:
 
     # ------------------------------------------------------------------- timing
     def tick_once(self, *, at: Optional[float] = None) -> list:
-        events = self.controller.tick(at=at)
-        stamp = now_timestamp()
-        for event in events:
-            event.timestamp = stamp
-            self._record_event(event)
-        if self.controller.cycle_no > self._last_persisted_cycle:
-            self._announce_cycle()
-        self.check_ack_timeouts()
-        self._publish_snapshot()
-        return events
+        with self._state_lock:
+            events = [] if self._green_inhibited else self.controller.tick(at=at)
+            stamp = now_timestamp()
+            for event in events:
+                event.timestamp = stamp
+                self._record_event(event)
+            if self.controller.cycle_no > self._last_persisted_cycle:
+                self._announce_cycle()
+            self.check_ack_timeouts()
+            self._publish_snapshot()
+            return events
 
     def _announce_cycle(self) -> None:
         cycle = self.controller.cycle_no
@@ -497,6 +627,7 @@ class ControllerService:
         # ack arrives, so the dashboard can show both.
         snapshot["intended"] = dict(snapshot["signals"])
         snapshot["actuator"] = dict(self._acked_states)
+        snapshot["safe_operation"] = self._safe_operation_view()
         snapshot["pending_commands"] = len(self._pending_acks)
         # Ack health, so the dashboard can show timed-out commands (and a
         # "not responding" actuator) instead of leaving rows pending forever.

@@ -38,7 +38,7 @@ def validate_command(command: dict, config: TimingConfig) -> CommandResult:
         errors.append(f"unknown state: {command.get('state')!r}")
         return CommandResult(False, None, errors)
 
-    if not isinstance(duration, (int, float)):
+    if isinstance(duration, bool) or not isinstance(duration, (int, float)):
         errors.append(f"duration_sec must be numeric, got {duration!r}")
     else:
         if state == SignalState.GREEN:
@@ -51,6 +51,8 @@ def validate_command(command: dict, config: TimingConfig) -> CommandResult:
             errors.append(f"yellow duration must be {config.yellow_seconds}, got {duration}")
         elif state == SignalState.ALL_RED and duration != config.all_red_seconds:
             errors.append(f"all-red duration must be {config.all_red_seconds}, got {duration}")
+        elif state == SignalState.RED and duration != 0:
+            errors.append(f"red duration must be 0, got {duration}")
 
     if errors:
         return CommandResult(False, None, errors)

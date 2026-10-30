@@ -29,7 +29,7 @@ from src.analytics.feature_engineering import (
     LABELS,
     FeatureSet,
     build_features,
-    chronological_split,
+    leakage_safe_chronological_split,
     to_matrix,
 )
 from src.common.schemas import SensorReading
@@ -84,7 +84,7 @@ def train(
     if len(features) < 20:
         raise ValueError(f"not enough feature rows to train: {len(features)}")
 
-    train_set, test_set = chronological_split(features, train_fraction)
+    train_set, test_set, _ = leakage_safe_chronological_split(features, train_fraction)
     pipeline = build_pipeline()
     pipeline.fit(to_matrix(train_set), train_set.labels)
 
