@@ -35,3 +35,6 @@ Thumbs.db
 # NOTE: models/congestion_model.joblib and results/ (figures + metrics) are
 # tracked intentionally for submission. Regenerate them with
 #   python -m src.analytics.run_evaluation --train
+
+# Local archive of historical project files (never push)
+/Archive/

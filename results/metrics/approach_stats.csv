@@ -1,5 +1,0 @@
-approach,samples,avg_queue,max_queue,avg_arrival,avg_wait,max_wait,congestion
-North,1250,2.537,23,3.33,18.614,95,HIGH
-South,1250,2.698,22,2.902,23.45,119,HIGH
-East,1250,2.566,21,2.661,24.434,135,HIGH
-West,1250,2.956,30,3.167,22.564,120,HIGH

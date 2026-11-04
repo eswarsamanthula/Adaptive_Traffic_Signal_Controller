@@ -1,6 +1,0 @@
-model,accuracy,balanced_accuracy,macro_precision,macro_recall,macro_f1,weighted_f1,majority_baseline_accuracy,majority_label,difference_from_majority_pp,beats_majority_baseline,high_recall,convergence_status
-Logistic Regression,0.6985,0.4238,0.6022,0.4238,0.4384,0.6396,0.6778,LOW,2.068,True,0.1327,not_applicable
-Random Forest,0.6638,0.4471,0.5179,0.4471,0.4655,0.6367,0.6778,LOW,-1.4009,False,0.2041,not_applicable
-Gradient Boosting,0.7038,0.4144,0.6263,0.4144,0.423,0.6456,0.6778,LOW,2.6017,True,0.0714,not_applicable
-MLP Neural Network,0.6805,0.4757,0.5619,0.4757,0.4993,0.652,0.6778,LOW,0.2668,True,0.2755,converged
-Majority-class baseline,0.6778,0.3333,0.2259,0.3333,0.2693,0.5476,0.6778,LOW,0.0,False,0.0,not_applicable
