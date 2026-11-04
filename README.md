@@ -77,6 +77,20 @@ into the LaTeX report or uploaded to Overleaf:
   `OVERLEAF_FIGURE_SNIPPETS.tex` provides LaTeX figure environments using the
   organized paths.
 
+#### Dashboard screenshot gallery
+
+| Overview | Signal timing |
+| --- | --- |
+| ![Dashboard overview](report_assets/dashboard/dashboard_overview.png) | ![Signal timing and approach states](report_assets/dashboard/dashboard_signal_timing.png) |
+
+| Traffic analytics | Testing Lab |
+| --- | --- |
+| ![Traffic analytics](report_assets/dashboard/dashboard_traffic_analytics.png) | ![Testing Lab](report_assets/dashboard/dashboard_testing_lab.png) |
+
+| Stop/Reset acknowledgement | Missing-ACK fault handling |
+| --- | --- |
+| ![Stop and Reset dashboard evidence](report_assets/dashboard/dashboard_stop_reset_ack.png) | ![Unconfirmed operation during missing-ACK test](report_assets/dashboard/dashboard_ack_fault_handling.png) |
+
 The live signal controller is deterministic and rule-based. The ML models are
 offline decision-support experiments and do not directly control signal
 phases. The dataset is team-prepared using real-world traffic data as a
