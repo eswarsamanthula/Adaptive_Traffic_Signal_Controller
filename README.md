@@ -52,10 +52,36 @@ dataset/    frozen synthetic data (5 files) + data_dictionary.md
 node_red/   flows.json, dashboard.html
 src/        common, simulator, mqtt, controller, actuator, analytics, database, service
 tests/      12 unittest modules (179 tests)
-results/    generated metrics + figures (git-ignored)
+results/    generated evaluation outputs (git-ignored; curated report graphs are in report_assets/graphs/)
 models/     trained model artefact (git-ignored)
 data/       SQLite database (live + backups)
+report_assets/ institution logo, architecture/workflow diagrams, dashboard evidence, curated graphs and Overleaf figure notes
 ```
+
+### Report dashboard screenshots and graphs
+
+The report-ready assets are kept in `report_assets/` so they can be inserted
+into the LaTeX report or uploaded to Overleaf:
+
+- `report_assets/dashboard/` contains six genuine screenshots of the primary
+  Node-RED dashboard: overview, signal timing, traffic analytics, Testing Lab,
+  Stop/Reset acknowledgement and controlled missing-ACK handling. The fault
+  capture shows an unconfirmed operation and should be described as such.
+- `report_assets/graphs/` contains selected classifier, fixed-versus-adaptive
+  and computational benchmark PNGs. The generated comparison plots are 300
+  dpi. The adaptive comparison is a deterministic simulation; it shows lower
+  average delay and queue measures alongside a higher maximum red wait.
+- The logo and architecture/workflow diagrams are at the `report_assets/` root.
+  The Overleaf LaTeX source and compiled report PDF are also kept there.
+  `OVERLEAF_ASSET_MANIFEST.md` maps the assets to report sections, and
+  `OVERLEAF_FIGURE_SNIPPETS.tex` provides LaTeX figure environments using the
+  organized paths.
+
+The live signal controller is deterministic and rule-based. The ML models are
+offline decision-support experiments and do not directly control signal
+phases. The dataset is team-prepared using real-world traffic data as a
+reference; it is not represented as sensor data collected from a physical
+intersection.
 
 ## Prerequisites (tested versions)
 

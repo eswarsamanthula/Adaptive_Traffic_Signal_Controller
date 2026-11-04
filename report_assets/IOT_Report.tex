@@ -1,0 +1,621 @@
+\documentclass[12pt,a4paper,oneside]{report}
+\usepackage[T1]{fontenc}
+\usepackage{mathptmx}
+\usepackage[left=30mm,right=25mm,top=25mm,bottom=25mm]{geometry}
+\usepackage{titlesec,fancyhdr}
+\setlength{\headheight}{30pt}
+\setlength{\headsep}{12pt}
+\usepackage{graphicx,array,longtable,pdflscape,setspace,capt-of}
+\usepackage[hidelinks,plainpages=false]{hyperref}
+\onehalfspacing
+\emergencystretch=2em
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{4pt}
+\setcounter{tocdepth}{1}
+\renewcommand{\contentsname}{Table of Contents}
+\newcommand{\institutionlogo}[1]{\IfFileExists{amrita-logo.png}{\includegraphics[width=#1]{amrita-logo.png}}{\fbox{\parbox{#1}{\centering Amrita Vishwa Vidyapeetham\\Place amrita-logo.png beside this file}}}}
+% If a figure is not yet present, show a labelled placeholder rather than fail compilation.
+\newcommand{\figimg}[2]{\IfFileExists{#1}{\includegraphics[#2]{#1}}{\fbox{\parbox{0.8\textwidth}{\centering\small [Image file not found: \detokenize{#1}]}}}}
+\newcommand{\ProjectTitle}{Adaptive Traffic Signal Controller Using IoT, MQTT, Node-RED and Machine Learning Analytics}
+\fancypagestyle{project}{%
+  \fancyhf{}
+  \fancyhead[C]{\parbox{\textwidth}{\centering\small\nouppercase{\ProjectTitle}}}
+  \fancyfoot[C]{\thepage}
+  \renewcommand{\headrulewidth}{0.4pt}
+}
+\fancypagestyle{plain}{%
+  \fancyhf{}
+  \fancyfoot[C]{\thepage}
+  \renewcommand{\headrulewidth}{0pt}
+}
+\newcommand{\EnableProjectHeaders}{%
+  \pagestyle{project}%
+  \fancypagestyle{plain}{%
+    \fancyhf{}
+    \fancyhead[C]{\parbox{\textwidth}{\centering\small\nouppercase{\ProjectTitle}}}
+    \fancyfoot[C]{\thepage}
+    \renewcommand{\headrulewidth}{0.4pt}
+  }%
+}
+\titlespacing*{\chapter}{0pt}{0pt}{16pt}
+\titlespacing*{\section}{0pt}{10pt}{4pt}
+\titlespacing*{\subsection}{0pt}{8pt}{3pt}
+\raggedbottom
+
+\begin{document}
+\hypersetup{pageanchor=false}
+\pagestyle{empty}
+
+% TITLE PAGE
+{\centering \Large\bfseries \ProjectTitle{}\par}
+{\centering Project report submitted in partial fulfilment of the requirements for the award of the degree of\par}
+{\centering \textbf{BACHELOR OF TECHNOLOGY}\par}
+{\centering in\par}
+{\centering \textbf{COMPUTER SCIENCE AND ENGINEERING}\par}
+{\centering Submitted by \textbf{Team 9}\par}
+{\centering \fontsize{14}{18}\selectfont Samanthula Eswar \quad AM.SC.U4CSE23349\par}
+{\centering \fontsize{14}{18}\selectfont Rayudu Vamsi Krishna \quad AM.SC.U4CSE23344\par}
+{\centering \fontsize{14}{18}\selectfont Bantupalli Harsha Vardhan \quad AM.SC.U4CSE23210\par}
+{\centering \fontsize{14}{18}\selectfont Kota Karthik \quad AM.SC.U4CSE23229\par}
+{\centering \fontsize{14}{18}\selectfont Sammeta Pavan \quad AM.SC.U4CSE23350\par}
+\vspace{0.4cm}
+{\centering \institutionlogo{4.5in}\par}
+{\centering \textbf{AMRITA SCHOOL OF COMPUTING}\par}
+{\centering \textbf{AMRITA VISHWA VIDYAPEETHAM}\par}
+{\centering \textbf{AMRITAPURI CAMPUS}\par}
+{\centering \textbf{KOLLAM 690525}\par}
+{\centering \textbf{NOVEMBER 2026}\par}
+
+\clearpage
+\hypersetup{pageanchor=true}
+\pagenumbering{roman}
+\pagestyle{plain}
+
+% ABSTRACT
+\phantomsection
+\addcontentsline{toc}{chapter}{Abstract}
+{\centering \Large\bfseries ABSTRACT\par}
+Fixed-time traffic signals allocate a preset green duration to each approach, regardless of the traffic waiting at that approach. This can waste green time when demand is low on one approach while queues continue to grow on another. This project, ``\ProjectTitle{}'', develops and evaluates a simulated Internet-of-Things (IoT) adaptive traffic signal controller for a four-approach intersection and compares its behaviour with a fixed-time baseline.
+
+The system connects a Python traffic simulator, an MQTT messaging layer using the Mosquitto broker, Node-RED flows, a SQLite database, a deterministic adaptive controller and a simulated actuator. The simulator publishes traffic readings; Node-RED validates and stores the readings; the controller calculates bounded green durations; and the actuator applies signal commands and returns acknowledgements. A dashboard displays traffic, signal and system information. Four machine-learning classifiers are also trained and evaluated for congestion classification. These models are used for offline analytics and evaluation; the live signal controller uses deterministic rules rather than an ML prediction.
+
+The dataset was prepared by Team 9 using real-world traffic data as a reference. It contains 1,250 one-minute timestamps for four approaches, giving 5,000 traffic readings. The team organised the readings, signal-cycle information and adaptive-decision records into a workbook and corresponding CSV files. The original external dataset source details were not available in the project records. Therefore, the dataset is described as team-prepared and derived, not as raw measurements collected by physical roadside sensors. The project also includes a testing environment for actuator validation, fault handling and Stop/Reset behaviour. All reported control results are from simulation and do not demonstrate deployment on a public road.
+
+\textbf{Keywords:} adaptive traffic signal; Internet of Things; MQTT; Node-RED; SQLite; machine learning; closed-loop control
+
+\clearpage
+\tableofcontents
+\clearpage
+\phantomsection\addcontentsline{toc}{chapter}{List of Figures}
+\listoffigures
+\clearpage
+\phantomsection\addcontentsline{toc}{chapter}{List of Tables}
+\listoftables
+\clearpage
+\phantomsection\addcontentsline{toc}{chapter}{List of Abbreviations}
+{\centering \Large\bfseries LIST OF ABBREVIATIONS\par}
+\vspace{6pt}
+\begingroup\setlength{\tabcolsep}{6pt}\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{|p{0.20\textwidth}|p{0.64\textwidth}|}\hline
+\textbf{Abbreviation} & \textbf{Meaning} \\\hline
+ACK & Acknowledgement \\\hline
+API & Application Programming Interface \\\hline
+CPU & Central Processing Unit \\\hline
+CSV & Comma-Separated Values \\\hline
+F1 & F1-score \\\hline
+IoT & Internet of Things \\\hline
+JSON & JavaScript Object Notation \\\hline
+ML & Machine Learning \\\hline
+MLP & Multilayer Perceptron \\\hline
+MQTT & Message Queuing Telemetry Transport \\\hline
+QoS & Quality of Service \\\hline
+RAM & Random Access Memory \\\hline
+RSS & Resident Set Size \\\hline
+SQL & Structured Query Language \\\hline
+SQLite & Embedded relational database engine \\\hline
+UI & User Interface \\\hline
+\end{tabular}\endgroup
+
+\clearpage
+\pagenumbering{arabic}
+\EnableProjectHeaders
+
+% CHAPTER 1
+\chapter{Introduction and Problem Definition}
+\section{Background and motivation}
+Road traffic in towns and cities is regulated largely by signalised intersections. A signal controller determines which approaches receive the right of way and for how long. Fixed-time controllers repeat a preset cycle of green, yellow and red intervals, often without using the traffic conditions at the intersection at that moment~\cite{ref6}. Such schedules are simple and predictable, but they cannot respond directly to a sudden queue, an empty approach or a change in traffic demand.
+
+The Internet of Things provides a way to connect traffic sensing, communication, data storage and control. Readings can be published by a sensor or simulator, distributed through a messaging broker, processed by software and used to generate a signal command. An acknowledgement from the actuator provides feedback about whether the command was applied. This project implements and evaluates that pipeline for a simulated four-approach intersection using Python, MQTT, Mosquitto, Node-RED and SQLite.
+
+\section{Problem statement}
+A fixed-time signal gives each approach a predetermined green duration even when the demand differs between approaches. As a result, a quiet approach may receive unused green time while a busy approach continues to accumulate vehicles. The project addresses the problem of designing and evaluating an IoT-based adaptive controller that reads the traffic state, selects a bounded green duration, applies the signal command through an actuator model and checks the resulting acknowledgement.
+
+The project evaluates whether this adaptive approach improves selected queue and delay measures over a fixed-time schedule on the same prepared traffic demand, while preserving the signal-state sequence and recording command acknowledgements.
+
+\section{Objectives}
+The objectives of the project are:
+\begin{enumerate}
+  \item Design an IoT pipeline that carries traffic readings from simulation through messaging, storage, analytics, decision and actuation.
+  \item Prepare a structured dataset containing traffic readings, signal-cycle information and adaptive-decision records for four approaches.
+  \item Implement a deterministic adaptive controller and a fixed-time baseline for comparison.
+  \item Train and compare Logistic Regression, Random Forest, Gradient Boosting and MLP classifiers for congestion classification using a temporal data split.
+  \item Measure model training time, inference latency, memory use and saved model size.
+  \item Evaluate closed-loop queue behaviour, command acknowledgements and signal safety.
+  \item Provide a dashboard and testing tools for observing traffic, decisions, actuator state and fault-handling behaviour.
+\end{enumerate}
+
+\begin{table}[htbp]\centering\small
+\caption{Objectives and corresponding evaluation evidence}\label{tab:objective-map}
+\begin{tabular}{|p{0.32\textwidth}|p{0.31\textwidth}|p{0.27\textwidth}|}\hline
+\textbf{Objective} & \textbf{Evaluation} & \textbf{Evidence} \\\hline
+IoT pipeline & Message flow and data-storage checks & MQTT, Node-RED and SQLite components \\\hline
+Dataset preparation & Row counts, schema and temporal split & Workbook, CSV files and data dictionary \\\hline
+Adaptive controller & Fixed-time versus adaptive simulation & Queue, delay and fairness measures \\\hline
+ML classification & Temporal test-set metrics & Four trained classifiers and result tables \\\hline
+Computational cost & Fit time, latency and memory & Benchmark results \\\hline
+Safety and feedback & Actuator validation and acknowledgement tests & Stop/Reset and fault-handling results \\\hline
+\end{tabular}\end{table}
+
+\section{Existing and proposed systems}
+A fixed-time signal follows a schedule prepared in advance. The green duration does not change in response to the queue currently waiting at an approach. The proposed system uses traffic readings to calculate the next green duration within configured minimum and maximum limits. It also records signal commands and actuator acknowledgements, making the control process observable.
+
+\begin{table}[htbp]\centering\small
+\caption{Comparison of fixed-time and proposed adaptive control}\label{tab:exist-vs-proposed}
+\begin{tabular}{|p{0.21\textwidth}|p{0.32\textwidth}|p{0.35\textwidth}|}\hline
+\textbf{Aspect} & \textbf{Fixed-time baseline} & \textbf{Proposed system} \\\hline
+Green-time decision & Preset duration & Computed from current traffic within configured limits \\\hline
+Response to demand & Does not react during a run & Re-evaluates demand during operation \\\hline
+Feedback & No actuator feedback in the baseline model & Command acknowledgements are recorded \\\hline
+Data handling & Fixed schedule & Traffic readings, decisions and events stored in SQLite \\\hline
+Analytics & No classifier in the baseline & Four offline ML classifiers are evaluated \\\hline
+Testing & Schedule execution & Testing lab, fault checks and Stop/Reset validation \\\hline
+\end{tabular}\end{table}
+
+\section{Scope and assumptions}
+The implementation covers one simulated intersection with four approaches: North, South, East and West. It includes a traffic simulator, MQTT communication, Node-RED integration, SQLite storage, a deterministic controller, a simulated actuator, an analytics pipeline and a dashboard. It does not include physical roadside sensors or signal heads. Pedestrian phases, emergency-vehicle pre-emption, public-transport priority and coordination between multiple intersections are outside the current scope.
+
+The dataset is team-prepared using real-world traffic data as a reference. Since the original external source details were not recorded, it is not treated as a verified raw field dataset. All queue and delay comparisons in this report are simulation results.
+
+\section{Report organisation}
+Chapter~2 presents the requirements and technologies. Chapter~3 documents the dataset and experimental methodology. Chapter~4 explains the system architecture and implementation. Chapter~5 presents the machine-learning and computational evaluation. Chapter~6 describes closed-loop testing and safety verification. Chapter~7 discusses the results and their validity. Chapter~8 presents the conclusion, limitations and future work.
+
+\clearpage
+% CHAPTER 2
+\chapter{System Requirements and Technologies}
+\section{Technology stack}
+The project uses software components that separate traffic simulation, messaging, processing, storage, control and visualisation. Their roles are summarised in Table~\ref{tab:tech-roles}.
+
+\begin{table}[htbp]\centering\small
+\caption{Technologies and their roles in the project}\label{tab:tech-roles}
+\begin{tabular}{|p{0.24\textwidth}|p{0.63\textwidth}|}\hline
+\textbf{Technology} & \textbf{Role} \\\hline
+Python & Traffic replay, controller logic, actuator simulation, data preparation and ML experiments \\\hline
+MQTT & Publish--subscribe messaging between system components \\\hline
+Eclipse Mosquitto & MQTT broker that receives and distributes messages~\cite{ref2} \\\hline
+Node-RED & Flow-based message ingestion, validation, database integration and dashboard~\cite{ref3} \\\hline
+SQLite & Local storage for readings, decisions, signal events and acknowledgements~\cite{ref4} \\\hline
+Scikit-learn & Training and evaluation of the four classification models~\cite{ref5} \\\hline
+Excel and CSV & Dataset workbook and files used by scripts \\\hline
+\end{tabular}\end{table}
+
+\subsection{MQTT communication}
+MQTT is a publish--subscribe messaging protocol. A publisher sends a message to a topic, and the broker forwards it to clients that subscribe to that topic. This separates message producers from consumers. MQTT defines Quality of Service levels that provide different delivery guarantees and overheads~\cite{ref1}. In this project, the broker connects the simulator, Node-RED, controller and actuator.
+
+\section{Functional requirements}
+\begin{enumerate}
+  \item The simulator publishes a traffic reading for each of the four approaches at each simulated time step.
+  \item The MQTT broker carries traffic readings, signal commands, acknowledgements and status messages.
+  \item Node-RED validates incoming readings and stores valid records in SQLite.
+  \item The controller calculates a green duration from current traffic within configured limits.
+  \item The actuator applies commands using the required signal-state sequence and publishes an acknowledgement.
+  \item The system stores readings, controller decisions, signal events and acknowledgement information.
+  \item The dashboard displays traffic and signal information and provides access to testing controls.
+  \item The analytics pipeline trains and evaluates four congestion classifiers using a temporal split.
+  \item The system supports a fixed-time baseline for comparison.
+\end{enumerate}
+
+\section{Non-functional requirements}
+\begin{itemize}
+  \item \textbf{Safety:} the actuator must prevent conflicting green states and enforce clearance intervals.
+  \item \textbf{Reproducibility:} dataset versions, temporal split boundaries and experiment settings should be recorded.
+  \item \textbf{Observability:} commands, events and acknowledgements should be timestamped and stored.
+  \item \textbf{Modularity:} components should have clearly defined responsibilities and exchange data through configured interfaces.
+  \item \textbf{Efficiency:} the system and benchmarked models should run on a CPU-only development machine.
+  \item \textbf{Validity:} simulation findings and the team-prepared dataset must not be represented as physical field measurements.
+\end{itemize}
+
+\section{Development and evaluation environment}
+The recorded benchmark environment was Windows 11 with Python 3.13.7, 12 logical CPU cores, scikit-learn 1.7.2 and NumPy 2.2.6. The ML experiments were run on CPU without a GPU. The IoT pipeline uses Eclipse Mosquitto, Node-RED and SQLite. The project is a software simulation; no physical traffic-signal hardware is claimed.
+
+\begin{table}[htbp]\centering\small
+\caption{Development and evaluation environment}\label{tab:environment}
+\begin{tabular}{|p{0.32\textwidth}|p{0.52\textwidth}|}\hline
+\textbf{Item} & \textbf{Recorded environment or role} \\\hline
+Operating system & Windows 11 \\\hline
+Python & 3.13.7 \\\hline
+CPU & 12 logical CPUs; CPU-only evaluation \\\hline
+NumPy & 2.2.6 \\\hline
+Scikit-learn & 1.7.2 \\\hline
+Messaging & Eclipse Mosquitto with MQTT \\\hline
+Flow integration & Node-RED \\\hline
+Database & SQLite \\\hline
+\end{tabular}\end{table}
+
+\clearpage
+% CHAPTER 3
+\chapter{Dataset Preparation and Methodology}
+\section{Dataset origin and scope}
+The dataset used in this project was prepared by Team 9 using real-world traffic data as a reference. The team organised and derived traffic readings, signal-cycle information and adaptive-decision records into a structured Excel workbook and corresponding CSV files for simulation, analysis and evaluation. The original external dataset source details were not available in the project records.
+
+Accordingly, the 5,000 traffic readings are described as a team-prepared dataset. They are not described as raw measurements collected directly from physical roadside sensors. No unsupported external source name or URL is added to this report.
+
+\section{Dataset structure and files}
+The master workbook is named \texttt{adaptive\_traffic\_project\_dataset.xlsx}. The dataset is organised into traffic readings, signal-cycle information, adaptive decisions and fixed-time baseline information. The related files are listed in Table~\ref{tab:dataset-files}.
+
+\begin{table}[htbp]\centering\small
+\caption{Dataset files and contents}\label{tab:dataset-files}
+\begin{tabular}{|p{0.40\textwidth}|p{0.47\textwidth}|}\hline
+\textbf{File} & \textbf{Content} \\\hline
+\url{adaptive_traffic_project_dataset.xlsx} & Master workbook containing the linked dataset sheets \\\hline
+\texttt{traffic\_data.csv} & Traffic readings for the four approaches; 5,000 rows \\\hline
+\texttt{signal\_cycle.csv} & Signal-cycle and phase information \\\hline
+\texttt{adaptive\_decisions.csv} & Adaptive green-time decision records \\\hline
+\texttt{fixed\_baseline\_signal.csv} & Fixed-time baseline information \\\hline
+\texttt{data\_dictionary.md} & Column definitions and data-origin description \\\hline
+\end{tabular}\end{table}
+
+The time axis contains 1,250 one-minute timestamps from 03:00 to 23:49 on 12 October 2026. Each timestamp has one row for each of the four approaches, giving $1{,}250 \times 4 = 5{,}000$ traffic readings. The approaches are North, South, East and West. The workbook keeps traffic readings, signal-cycle records, adaptive decisions and the fixed-time baseline in separate linked structures.
+
+\section{Dataset attributes and preparation}
+The traffic records describe the timestamp, approach and traffic conditions such as queue or vehicle count, flow, speed and occupancy. Identifiers such as \texttt{Cycle\_No}, \texttt{Decision\_ID} and \texttt{Event\_ID} connect relevant records across the dataset files. The detailed column definitions are maintained in \texttt{data\_dictionary.md}.
+
+The preparation process used the following steps:
+\begin{enumerate}
+  \item Establish a one-minute time axis containing 1,250 timestamps.
+  \item Represent each of the four approaches at every timestamp.
+  \item Organise the traffic readings and related signal-cycle and decision records into linked sheets.
+  \item Keep the fixed-time baseline information separate from adaptive-decision records.
+  \item Export the workbook sheets to CSV files for use by Python scripts.
+  \item Maintain a data dictionary describing the columns and the derived nature of the dataset.
+\end{enumerate}
+
+Signal states GREEN, YELLOW and ALL\_RED are generated by the simulator and actuator logic; they are not treated as raw traffic sensor fields in the master traffic dataset.
+
+\section{Feature engineering}
+The ML pipeline converts the traffic readings into model features. The feature set includes current queue and flow values, lagged values, short rolling averages, changes from the previous minute and time-of-day indicators. Features are calculated within each approach and use past observations only, so that future readings are not used to construct an earlier feature row. Where scaling is required, the scaler is fitted on the training period only.
+
+\section{Temporal training and test split}
+The data are split chronologically rather than randomly. A temporal split is more appropriate for this experiment because a deployed controller would make decisions about future traffic using information available up to the current time. A random split could place neighbouring observations in both training and test subsets and produce an overly optimistic estimate.
+
+The dataset contains 5,000 source traffic readings. Feature engineering produces 4,996 feature rows. The final temporal split contains 3,492 training rows and 1,500 test rows; four boundary rows are excluded. The latest training target timestamp is 17:33 on 12 October 2026, and the earliest test feature timestamp is 17:34 on the same date.
+
+\begin{table}[htbp]\centering\small
+\caption{Temporal split used for the ML evaluation}\label{tab:split}
+\begin{tabular}{|p{0.34\textwidth}|p{0.28\textwidth}|p{0.18\textwidth}|}\hline
+\textbf{Subset} & \textbf{Rows} & \textbf{Notes} \\\hline
+Original traffic readings & 5,000 & Four approaches across 1,250 timestamps \\\hline
+Feature rows generated & 4,996 & After temporal feature construction \\\hline
+Training set & 3,492 & Earlier observations \\\hline
+Test set & 1,500 & Later observations \\\hline
+Boundary rows excluded & 4 & Excluded at the temporal split boundary \\\hline
+\end{tabular}\end{table}
+
+\section{Test-set class distribution}
+The test set contains three congestion categories: Low, Medium and High. The class distribution is imbalanced, with the Low category forming the largest share. This is why accuracy is considered together with balanced accuracy, macro F1-score and High-class recall.
+
+\begin{table}[htbp]\centering\small
+\caption{Congestion class distribution in the 1,500-row test set}\label{tab:class-dist}
+\begin{tabular}{|p{0.34\textwidth}|p{0.22\textwidth}|p{0.22\textwidth}|}\hline
+\textbf{Congestion category} & \textbf{Rows} & \textbf{Share} \\\hline
+Low & 1,017 & 67.80\% \\\hline
+Medium & 385 & 25.67\% \\\hline
+High & 98 & 6.53\% \\\hline
+Total & 1,500 & 100.00\% \\\hline
+\end{tabular}\end{table}
+
+\clearpage
+% CHAPTER 4
+\chapter{System Architecture and Implementation}
+\section{Architecture overview}
+The system is organised as connected components. The Python simulator represents the traffic sensing layer and publishes readings. Mosquitto distributes MQTT messages. Node-RED validates incoming data, writes records to SQLite and supplies information to the dashboard. The deterministic controller processes current traffic information and publishes signal commands. The simulated actuator applies the command, enforces the signal sequence and publishes an acknowledgement.
+
+\begin{figure}[htbp]\centering
+\figimg{fig_architecture.png}{width=0.95\textwidth}
+\caption{Architecture of the simulated adaptive traffic signal controller.}\label{fig:architecture}
+\end{figure}
+
+\section{End-to-end workflow}
+The live control sequence is described below. The workflow illustration summarizes the data-preparation, simulation, communication and analytics workstream; it is not intended to place offline ML inference in the live signal-control path.
+\begin{enumerate}
+  \item The Python simulator replays one traffic reading per approach per simulated minute.
+  \item Mosquitto distributes the readings to the subscribed processing components.
+  \item Node-RED validates the incoming records and stores valid readings in SQLite.
+  \item The dashboard displays traffic, current signal states, decisions and acknowledgements.
+  \item The deterministic controller calculates the green duration for the next phase within configured limits.
+  \item The controller publishes the signal command to the simulated actuator.
+  \item The actuator applies the command using the required signal-state sequence.
+  \item The actuator publishes an acknowledgement, which is recorded for feedback and evaluation.
+\end{enumerate}
+
+\begin{figure}[htbp]\centering
+\figimg{fig_workflow.png}{width=0.95\textwidth}
+\caption{Project data-preparation, simulation, communication and analytics workflow. The live deterministic controller and actuator-feedback path is shown in Figure~\ref{fig:architecture}.}\label{fig:workflow}
+\end{figure}
+
+\section{Traffic simulator and message layer}
+The simulator replays the prepared traffic readings as if they were arriving from roadside detectors. It publishes the traffic state of each approach and supports accelerated replay for testing. It also supplies the simulated intersection state. The MQTT layer separates message producers from consumers: the simulator publishes readings, the controller publishes commands, and the actuator publishes acknowledgements and status information.
+
+The message layer uses separate topic branches for readings, commands, acknowledgements and status. Messages are structured as JSON and carry timestamps or identifiers needed to associate readings with decisions and signal events. Exact live topic names should be taken from the current project configuration when preparing any supplementary topic listing; illustrative topic names are not substituted for verified implementation values in this report.
+
+\section{Node-RED and SQLite integration}
+Node-RED subscribes to relevant MQTT messages, checks that required fields are present and that values are within configured ranges, and writes valid records to SQLite. Invalid data are handled separately rather than being treated as valid traffic readings. The flows also provide dashboard updates and expose the project's testing controls.
+
+SQLite stores traffic readings, controller decisions, signal events and acknowledgement information. This provides a persistent record for the dashboard, test review and evaluation scripts.
+
+\section{Deterministic adaptive controller}
+The live controller uses deterministic rules based on current traffic information. It calculates green durations subject to configured minimum and maximum limits. This bounds the time assigned to any one approach and prevents a phase from being held indefinitely. A fixed-time baseline uses a constant green duration for comparison.
+
+\begin{table}[htbp]\centering\small
+\caption{Configured signal timing parameters}\label{tab:ctrl-params}
+\begin{tabular}{|p{0.48\textwidth}|p{0.30\textwidth}|}\hline
+\textbf{Parameter} & \textbf{Configured value} \\\hline
+Minimum green time & 10 seconds \\\hline
+Default green time & 25 seconds \\\hline
+Maximum green time & 60 seconds \\\hline
+Yellow duration & 3 seconds \\\hline
+All-red duration & 2 seconds \\\hline
+\end{tabular}\end{table}
+
+\section{Actuator and signal-state sequence}
+The actuator receives a command identifying the phase and requested green duration. It applies signal changes through the required GREEN, YELLOW and ALL\_RED sequence. It rejects unsafe commands, including commands that would result in conflicting greens or skip a required clearance interval. The actuator returns an acknowledgement describing the command outcome. The acknowledgement is used to verify that the command was processed rather than assuming that publication alone proves successful actuation.
+
+\section{Dashboard}
+The Node-RED dashboard provides a visual view of the simulated intersection. It presents traffic readings, queues, signal states, controller decisions, acknowledgements and system status. The primary dashboard route in the project is \texttt{/dashboard}; the additional \texttt{/ui/} route is secondary.
+
+\begin{figure}[htbp]\centering
+\figimg{dashboard_overview.png}{width=0.95\textwidth,height=0.48\textheight,keepaspectratio}
+\caption{Overview of the running traffic dashboard.}\label{fig:dashboard-overview}
+\end{figure}
+
+\clearpage
+% CHAPTER 5
+\chapter{Machine Learning and Computational Evaluation}
+\section{Role of machine learning in the project}
+The machine-learning component classifies congestion levels from engineered traffic features. The models are trained and assessed offline to compare predictive performance and computational cost. They are not the live signal-timing decision-maker in the current implementation. The live controller uses deterministic rules with configured timing bounds.
+
+\section{Classification models}
+Four models are evaluated: Logistic Regression, Random Forest, Gradient Boosting and a Multilayer Perceptron (MLP). The MLP is a feed-forward neural network with two hidden layers of 64 and 32 units.
+
+\begin{table}[htbp]\centering\small
+\caption{Machine-learning models evaluated}\label{tab:models}
+\begin{tabular}{|p{0.28\textwidth}|p{0.56\textwidth}|}\hline
+\textbf{Model} & \textbf{Description} \\\hline
+Logistic Regression & Linear classification baseline \\\hline
+Random Forest & Ensemble of decision trees \\\hline
+Gradient Boosting & Sequential ensemble of decision trees \\\hline
+MLP & Feed-forward neural network with hidden layers of 64 and 32 units \\\hline
+\end{tabular}\end{table}
+
+\section{Evaluation metrics and classification results}
+The classification models are compared using accuracy, balanced accuracy, macro F1-score and High-class recall. Accuracy reports the proportion of all test examples classified correctly. Balanced accuracy gives equal importance to recall across classes. Macro F1 averages the class-level F1-scores, and High-class recall measures the proportion of genuinely High-congestion examples detected by the model.
+
+\begin{table}[htbp]\centering\small
+\caption{Classification results on the temporal test set}\label{tab:ml-results}
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{|p{0.22\textwidth}|p{0.13\textwidth}|p{0.16\textwidth}|p{0.14\textwidth}|p{0.13\textwidth}|}\hline
+\textbf{Model} & \textbf{Accuracy} & \textbf{Balanced accuracy} & \textbf{Macro F1} & \textbf{High recall} \\\hline
+Logistic Regression & 0.6987 & 0.4238 & 0.4384 & 0.1327 \\\hline
+Random Forest & 0.6713 & 0.4538 & 0.4747 & 0.2143 \\\hline
+Gradient Boosting & 0.7067 & 0.4163 & 0.4258 & 0.0714 \\\hline
+MLP & 0.6773 & 0.4815 & 0.5014 & 0.2857 \\\hline
+\end{tabular}\end{table}
+
+The MLP gives the highest macro F1-score and High-class recall among the four models, while Gradient Boosting gives the highest overall accuracy. The test set's majority-class baseline accuracy is 0.6780. The MLP's accuracy of 0.6773 is slightly below that baseline, which shows why accuracy alone is not sufficient to assess the models. High-class recall remains low for every model, so the results do not support describing the classifier as a reliable detector of every high-congestion event.
+
+\begin{figure}[htbp]\centering
+\figimg{model_comparison_metrics.png}{width=0.92\textwidth,height=0.34\textheight,keepaspectratio}
+\caption{Comparison of classification metrics for the four models on the temporal test set.}\label{fig:ml-metrics}
+\end{figure}
+
+\begin{figure}[htbp]\centering
+\figimg{model_comparison_confusion_matrices.png}{width=0.95\textwidth,height=0.40\textheight,keepaspectratio}
+\caption{Confusion matrices for Logistic Regression, Random Forest, Gradient Boosting and MLP on the temporal test set.}\label{fig:confusion}
+\end{figure}
+
+\begin{figure}[htbp]\centering
+\figimg{model_comparison_per_class_f1.png}{width=0.90\textwidth,height=0.34\textheight,keepaspectratio}
+\caption{Per-class F1-score comparison for the four classifiers.}\label{fig:per-class-f1}
+\end{figure}
+
+\begin{figure}[htbp]\centering
+\figimg{model_vs_baseline.png}{width=0.90\textwidth,height=0.34\textheight,keepaspectratio}
+\caption{Comparison of model performance with the majority-class baseline.}\label{fig:model-baseline}
+\end{figure}
+
+\section{Computational benchmark setup}
+The computational benchmark was run on Windows 11 using Python 3.13.7, 12 logical CPUs, scikit-learn 1.7.2 and NumPy 2.2.6. The experiment was CPU-only. Three fit runs were performed for each model. The recorded quantities include mean fit time, peak process memory (RSS), median and 95th-percentile inference latency, and saved artifact size.
+
+\section{Computational benchmark results}
+\begin{table}[htbp]\centering\small
+\caption{Approximate computational performance of the four models}\label{tab:comp-perf}
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{|p{0.20\textwidth}|p{0.12\textwidth}|p{0.13\textwidth}|p{0.12\textwidth}|p{0.12\textwidth}|p{0.13\textwidth}|}\hline
+\textbf{Model} & \textbf{Fit (s)} & \textbf{Peak RSS (MB)} & \textbf{p50 (ms)} & \textbf{p95 (ms)} & \textbf{Artifact (MB)} \\\hline
+Logistic Regression & 0.0253 & 153.9 & 0.094 & 0.191 & 0.030 \\\hline
+Random Forest & 0.7969 & 249.5 & 4.912 & 6.806 & 53.972 \\\hline
+Gradient Boosting & 0.7152 & 270.7 & 0.342 & 0.611 & 0.361 \\\hline
+MLP & 2.3105 & 273.5 & 0.110 & 0.128 & 0.129 \\\hline
+\end{tabular}\end{table}
+
+The reported benchmark values are specific to the development machine and benchmark procedure. Logistic Regression has the shortest fit time and smallest saved artifact. Random Forest has the largest artifact and highest reported p50/p95 inference latency among these models. MLP has the highest macro F1-score and High-class recall, but it does not have the highest overall accuracy. Model choice therefore depends on the metric being prioritised; these offline measurements do not mean that any of the four models controls the live signal phases.
+
+The available benchmark summary also contains throughput figures, but it does not specify the prediction batch size or denominator clearly enough to compare them directly with single-record p50/p95 latency. Those figures are not reproduced here without the original benchmark definition.
+
+\begin{figure}[htbp]\centering
+\figimg{benchmark_fit_time.png}{width=0.88\textwidth,height=0.31\textheight,keepaspectratio}
+\caption{Model fitting time measured during the computational benchmark.}\label{fig:benchmark-fit}
+\end{figure}
+
+\begin{figure}[htbp]\centering
+\figimg{benchmark_peak_rss.png}{width=0.88\textwidth,height=0.31\textheight,keepaspectratio}
+\caption{Peak process memory (RSS) measured during the computational benchmark.}\label{fig:benchmark-memory}
+\end{figure}
+
+\begin{figure}[htbp]\centering
+\figimg{benchmark_latency.png}{width=0.88\textwidth,height=0.31\textheight,keepaspectratio}
+\caption{Median and 95th-percentile inference latency for the four classifiers.}\label{fig:benchmark-latency}
+\end{figure}
+
+\begin{figure}[htbp]\centering
+\figimg{benchmark_artifact_size.png}{width=0.88\textwidth,height=0.31\textheight,keepaspectratio}
+\caption{Saved model artifact size for the four classifiers.}\label{fig:benchmark-artifact}
+\end{figure}
+
+\clearpage
+% CHAPTER 6
+\chapter{Closed-Loop Testing and Safety Verification}
+\section{Evaluation setup}
+The closed-loop checks exercise the controller and actuator using an isolated in-process test environment. The setup includes the actual controller logic, controller service, actuator node or simulator, a validation component and a temporary SQLite database. A manual clock is used to make timing behaviour repeatable. The resulting latency measurements represent application-level processing in this test harness; they do not include delay from a physical MQTT network or a deployed broker connection.
+
+The fixed-time and adaptive simulations use the same prepared traffic demand so that the comparison focuses on the difference between the scheduling strategies. The evaluation is still a simplified software simulation rather than a measurement at a physical intersection.
+
+\section{Evaluation measures}
+The closed-loop evaluation records average delay, average queue, maximum queue, fairness and maximum red waiting time. It also checks the number of actuator events, whether commands receive acknowledgements and whether the signal-state sequence is respected.
+
+\section{Fixed-time and adaptive simulation results}
+\begin{table}[htbp]\centering\small
+\caption{Fixed-time versus adaptive traffic simulation results}\label{tab:fixed-vs-adaptive}
+\begin{tabular}{|p{0.40\textwidth}|p{0.20\textwidth}|p{0.20\textwidth}|}\hline
+\textbf{Measure} & \textbf{Fixed-time} & \textbf{Adaptive} \\\hline
+Average delay (seconds) & 139.399 & 76.585 \\\hline
+Average queue & 7.005 & 3.848 \\\hline
+Maximum queue & 113 & 21 \\\hline
+Jain's fairness index & 0.9572 & 0.9923 \\\hline
+Maximum red waiting time (seconds) & 95 & 164 \\\hline
+\end{tabular}\end{table}
+
+\begin{figure}[htbp]\centering
+\figimg{fixed_vs_adaptive.png}{width=0.94\textwidth,height=0.38\textheight,keepaspectratio}
+\caption{Fixed-time and adaptive traffic-control results across delay, queue, fairness and maximum red waiting time in the simulation.}\label{fig:fixed-adaptive}
+\end{figure}
+
+The adaptive run has lower average delay and queue and a lower maximum queue in this simulation. Its fairness index is also higher. However, the maximum red waiting time rises from 95 seconds to 164 seconds. This is an important trade-off: better average results do not guarantee a better worst-case wait for every approach or vehicle. The maximum red waiting time must remain visible in the evaluation rather than being omitted from the result summary.
+
+\section{Actuator acknowledgements and signal safety}
+The actuator validation checks that signal commands follow the allowed GREEN, YELLOW and ALL\_RED sequence and that conflicting approaches are not granted green simultaneously. The testing harness records commands and acknowledgements so that an issued command is not automatically counted as a successfully applied command.
+
+The normal closed-loop test recorded 37 phase events and received 37 acknowledgements. The successful path had no reported safety violations in the validation run. These observations apply to the simulated actuator and test harness only.
+
+\section{Stop and Reset verification}
+The Stop and Reset procedure sends a distinct RED command for each of the four approaches. The operation is confirmed only after all four commands receive accepted acknowledgements. A successful Stop or Reset therefore requires 4/4 acknowledgements. In the fault-injected case where an acknowledgement is withheld, the operation remains unconfirmed and restart is inhibited. This failure case is intentional evidence that the system does not report a successful safe-state transition without the required acknowledgement.
+
+\begin{table}[htbp]\centering\small
+\caption{Stop/Reset acknowledgement verification}\label{tab:stop-reset}
+\begin{tabular}{|p{0.38\textwidth}|p{0.27\textwidth}|p{0.25\textwidth}|}\hline
+\textbf{Test condition} & \textbf{Observed behaviour} & \textbf{Outcome} \\\hline
+All four RED commands acknowledged & 4/4 accepted acknowledgements received & Operation confirmed \\\hline
+One acknowledgement withheld & Operation remains unconfirmed; restart inhibited & Failure handled safely \\\hline
+\end{tabular}\end{table}
+
+\section{Automated verification}
+The final reported automated test run contained 200 passing tests and zero failures. The successful safety paths reported no conflicting-green or skipped-clearance violations. The acknowledgement-withheld test remains a negative test: it is expected to prevent confirmation and restart rather than be reported as a successful Stop/Reset operation.
+
+\clearpage
+% CHAPTER 7
+\chapter{Results and Discussion}
+\section{Main findings}
+The evaluation produces three main findings. First, the adaptive controller improves the average queue and delay measures in the prepared simulation when compared with the fixed-time baseline. Second, the machine-learning results depend on the metric: Gradient Boosting has the highest accuracy, while MLP has the highest macro F1-score and High-class recall. Third, the actuator and Stop/Reset checks show the importance of acknowledgements: a safe-state operation is not confirmed when one of the required acknowledgements is missing.
+
+\section{Interpretation of traffic-control results}
+In the recorded fixed-time versus adaptive run, average delay decreases from 139.399 seconds to 76.585 seconds (about 45.1\% lower), and average queue decreases from 7.005 to 3.848 (about 45.1\% lower). Maximum queue decreases from 113 to 21 (about 81.4\% lower). Jain's fairness index increases from 0.9572 to 0.9923.
+
+The maximum red waiting time, however, increases from 95 seconds to 164 seconds (about 72.6\% higher) in the adaptive run. Therefore, the adaptive schedule improves several aggregate measures while worsening this worst-case waiting measure. Further controller tuning should target this trade-off, for example by incorporating an explicit maximum-wait constraint and then re-evaluating both average and worst-case performance.
+
+\section{Interpretation of ML results}
+The congestion test set is imbalanced, with 67.80\% of its rows labelled Low. The majority-class accuracy baseline is 0.6780. Logistic Regression and Gradient Boosting exceed that accuracy baseline, while Random Forest and MLP do not. MLP nevertheless produces the best macro F1-score and High-class recall among the four models. These values show that the models differ in how they trade overall accuracy against performance on minority classes. High-class recall is low for every model, so further work is required before a congestion classifier could be relied upon for safety-related decisions.
+
+The live controller does not currently use these ML predictions. It uses deterministic rules, which keeps the current signal-timing behaviour separate from the offline ML experiment and avoids overstating the role of machine learning in the implemented system.
+
+\section{Validity of the evaluation}
+The traffic dataset was prepared by the team using real-world traffic data as a reference; the original external source details are not available in the project records. The traffic-control comparison is a simplified simulation on this prepared demand, and the actuator is simulated. The in-process closed-loop test measures application-level processing and does not include physical network or field-device latency. Consequently, the results are useful for comparing the implemented software paths under the defined test conditions, but they are not evidence of measured improvement on a public road.
+
+The ML test set comes from a temporal split of a single prepared day. Performance may differ on other days, intersections, traffic distributions or sensor types. Computational results also depend on the development machine and measurement method.
+
+\clearpage
+% CHAPTER 8
+\chapter{Conclusion, Limitations and Future Work}
+\section{Conclusion}
+This project implemented a simulated IoT-based adaptive traffic signal controller for a four-approach intersection. The software pipeline connects a Python traffic simulator, MQTT communication through Mosquitto, Node-RED integration, SQLite storage, a deterministic controller, a simulated actuator and a dashboard. The actuator returns acknowledgements, allowing the system to verify command outcomes rather than assuming that a published command has been applied.
+
+The team prepared a structured dataset with 5,000 traffic readings across 1,250 one-minute timestamps and four approaches. Four ML classifiers were evaluated using a chronological split. The ML results show that the best model depends on the metric, and the current classifiers have limited High-class recall. The live controller remains rule-based. In the recorded traffic simulation, the adaptive controller reduced average delay and queue and improved the fairness index, but it also increased the maximum red waiting time. Stop/Reset validation confirmed successful operation only after all four RED acknowledgements were received and prevented restart when an acknowledgement was withheld.
+
+\section{Limitations}
+\begin{itemize}
+  \item The dataset is team-prepared using real-world traffic data as a reference. Its original source details were not recorded, and it is not a collection of verified raw roadside measurements.
+  \item The system is a software simulation of one four-approach intersection; no physical sensors, signal heads or real road deployment were tested.
+  \item The traffic-control comparison is based on a simplified prepared demand and does not represent every condition at a real intersection.
+  \item The maximum red waiting time increased in the reported adaptive run, despite improvements in average queue and delay.
+  \item The ML experiment uses one temporal test period from a single prepared day, and the High class is under-represented.
+  \item The in-process closed-loop latency test excludes physical MQTT network, broker and field-device delays.
+  \item Pedestrian phases, emergency-vehicle pre-emption, public-transport priority and multi-intersection coordination are not implemented.
+\end{itemize}
+
+\section{Future work}
+\begin{itemize}
+  \item Collect or obtain a documented multi-day traffic dataset and validate the controller against traceable field measurements.
+  \item Add more intersection layouts and evaluate the controller across different traffic patterns, weather and peak periods.
+  \item Introduce explicit maximum-wait and fairness constraints to reduce the worst-case red waiting time.
+  \item Add pedestrian phases, emergency-vehicle pre-emption and public-transport priority.
+  \item Evaluate coordination between multiple intersections along a corridor.
+  \item Investigate whether ML congestion forecasts can safely support the deterministic controller, with a separate evaluation before enabling any live influence.
+  \item Add MQTT authentication and encryption and test the system on embedded hardware before any real deployment.
+  \item Include physical network and actuator timing in a future end-to-end performance evaluation.
+\end{itemize}
+
+% REFERENCES
+\clearpage
+\renewcommand{\bibname}{References}
+\begin{thebibliography}{99}
+\phantomsection\addcontentsline{toc}{chapter}{References}
+\setlength{\itemsep}{6pt}
+\setlength{\parskip}{0pt}
+\bibitem{ref1} OASIS, ``MQTT Version 5.0,'' OASIS Standard, March 2019.
+\bibitem{ref2} R. A. Light, ``Mosquitto: server and client implementation of the MQTT protocol,'' \textit{Journal of Open Source Software}, vol. 2, no. 13, p. 265, 2017.
+\bibitem{ref3} OpenJS Foundation, ``Node-RED: Low-code programming for event-driven applications,'' project documentation, \url{https://nodered.org}.
+\bibitem{ref4} SQLite Consortium, ``SQLite documentation,'' \url{https://www.sqlite.org/docs.html}.
+\bibitem{ref5} F. Pedregosa \textit{et al.}, ``Scikit-learn: Machine learning in Python,'' \textit{Journal of Machine Learning Research}, vol. 12, pp. 2825--2830, 2011.
+\bibitem{ref6} F. V. Webster, ``Traffic signal settings,'' Road Research Technical Paper No. 39, Her Majesty's Stationery Office, London, 1958.
+\end{thebibliography}
+
+% APPENDIX: supplementary project screenshots only. Generic example commands,
+% unverified MQTT topic names, representative SQL and unconfirmed contributions
+% were removed instead of being presented as implemented evidence.
+\clearpage\appendix
+\chapter{Dashboard and Testing Evidence}
+This appendix contains genuine screenshots captured from the running project dashboard. All image files are uploaded to the same root folder as this \texttt{IOT\_Report.tex} file in Overleaf; therefore, figure commands use filenames without a \texttt{report\_assets/dashboard/} directory prefix.
+
+\begin{figure}[htbp]\centering
+\figimg{dashboard_signal_timing.png}{width=0.92\textwidth,height=0.48\textheight,keepaspectratio}
+\caption{Dashboard view showing signal timing and approach states.}\label{fig:dashboard-signal-timing}
+\end{figure}
+\begin{figure}[htbp]\centering
+\figimg{dashboard_traffic_analytics.png}{width=0.92\textwidth,height=0.48\textheight,keepaspectratio}
+\caption{Dashboard view showing traffic analytics.}\label{fig:dashboard-analytics}
+\end{figure}
+\begin{figure}[htbp]\centering
+\figimg{dashboard_testing_lab.png}{width=0.92\textwidth,height=0.48\textheight,keepaspectratio}
+\caption{Testing lab in the running dashboard.}\label{fig:dashboard-testing-lab}
+\end{figure}
+\begin{figure}[htbp]\centering
+\figimg{dashboard_stop_reset_ack.png}{width=0.92\textwidth,height=0.48\textheight,keepaspectratio}
+\caption{Stop/Reset operation and actuator acknowledgement evidence.}\label{fig:dashboard-stop-reset}
+\end{figure}
+
+\begin{figure}[htbp]\centering
+\figimg{dashboard_ack_fault_handling.png}{width=0.92\textwidth,height=0.48\textheight,keepaspectratio}
+\caption{Dashboard evidence of acknowledgement fault handling; an operation with a missing acknowledgement remains unconfirmed.}\label{fig:dashboard-ack-fault}
+\end{figure}
+
+\end{document}
+
+\n
